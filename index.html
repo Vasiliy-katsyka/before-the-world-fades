@@ -261,13 +261,14 @@
         let isMobile = false;
 
         // Using direct GitHub LFS Media CDN URLs to bypass local text-pointer limits
+        // Using local relative paths because Netlify hosts the actual files on the same server
         const AUDIO_FILES = {
-            1: "https://media.githubusercontent.com/media/Vasiliy-katsyka/before-the-world-fades/main/audio/Its just a burning memory.m4a",
-            2: "https://media.githubusercontent.com/media/Vasiliy-katsyka/before-the-world-fades/main/audio/A losing battle is raging.m4a",
-            3: "https://media.githubusercontent.com/media/Vasiliy-katsyka/before-the-world-fades/main/audio/Back there Benjamin.m4a",
-            4: "https://media.githubusercontent.com/media/Vasiliy-katsyka/before-the-world-fades/main/audio/Stage 4 Post Awareness Confusions.m4a",
-            5: "https://media.githubusercontent.com/media/Vasiliy-katsyka/before-the-world-fades/main/audio/Stage 5 Advanced plaque entanglements.m4a",
-            6: "https://media.githubusercontent.com/media/Vasiliy-katsyka/before-the-world-fades/main/audio/Stage 6 Place in the World fades away.m4a"
+            1: "audio/Its just a burning memory.m4a",
+            2: "audio/A losing battle is raging.m4a",
+            3: "audio/Back there Benjamin.m4a",
+            4: "audio/Stage 4 Post Awareness Confusions.m4a",
+            5: "audio/Stage 5 Advanced plaque entanglements.m4a",
+            6: "audio/Stage 6 Place in the World fades away.m4a"
         };
 
         const STAGE_NAMES = {
