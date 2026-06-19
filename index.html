@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Before the World Fades</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            font-family: 'Courier New', Courier, monospace;
+            user-select: none;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Retro CRT Scanline & Vignette Overlays */
+        #vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.85) 100%);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        #scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+            z-index: 3;
+            opacity: 0.85;
+        }
+
+        /* UI Overlay Screen */
+        #ui-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #f5f2eb;
+            z-index: 10;
+            background-color: rgba(10, 10, 10, 0.95);
+            transition: opacity 1.5s ease;
+        }
+
+        .screen-content {
+            text-align: center;
+            max-width: 600px;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            letter-spacing: 5px;
+            color: #dcd3be;
+            text-shadow: 0 0 10px rgba(220, 211, 190, 0.3);
+        }
+
+        p {
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #a39e93;
+        }
+
+        .btn {
+            background-color: transparent;
+            border: 1px solid #dcd3be;
+            color: #dcd3be;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            background-color: #dcd3be;
+            color: #0a0a10;
+            box-shadow: 0 0 15px rgba(220, 211, 190, 0.4);
+        }
+
+        /* In-Game HUD */
+        #hud {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            color: #a39e93;
+            z-index: 5;
+            pointer-events: none;
+            display: none;
+            opacity: 0.8;
+        }
+
+        .hud-element {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        #stage-title {
+            font-size: 1.2rem;
+            color: #dcd3be;
+            margin-bottom: 10px;
+        }
+
+        /* Developer Skip Menu */
+        #dev-menu {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 20;
+            background: rgba(20, 20, 20, 0.8);
+            border: 1px solid #3a3835;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        #dev-menu p {
+            margin: 0 0 10px 0;
+            font-size: 0.75rem;
+            color: #8c887f;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .dev-btn {
+            background: #2a2825;
+            border: 1px solid #5a5752;
+            color: #dcd3be;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-right: 4px;
+            margin-bottom: 4px;
+            font-family: inherit;
+        }
+
+        .dev-btn:hover {
+            background: #dcd3be;
+            color: #000;
+        }
+
+        /* Reticle for interaction */
+        #reticle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 6px;
+            height: 6px;
+            background-color: rgba(220, 211, 190, 0.5);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 4;
+            display: none;
+        }
+
+        /* Flash overlay for memories */
+        #flash-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 15;
+            transition: opacity 0.1s ease-out;
+        }
+
+        #subtitles {
+            position: absolute;
+            bottom: 10%;
+            width: 100%;
+            text-align: center;
+            color: #f5f2eb;
+            font-size: 1.2rem;
+            font-style: italic;
+            z-index: 10;
+            pointer-events: none;
+            text-shadow: 2px 2px 4px #000;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+    </style>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+    <div id="vignette"></div>
+    <div id="scanlines"></div>
+    <div id="reticle"></div>
+    <div id="flash-overlay"></div>
+    <div id="subtitles"></div>
+
+    <!-- Main Menu Screen -->
+    <div id="ui-container">
+        <div class="screen-content" id="start-screen">
+            <h1>Before the World Fades</h1>
+            <p>An abstract exploration of memory degradation.<br>Inspired by the compositions of The Caretaker.<br><br>Put on headphones. Walk down the corridors. Seek what remains.</p>
+            <button class="btn" id="start-btn">Enter the Mind</button>
+        </div>
+    </div>
+
+    <!-- Game HUD -->
+    <div id="hud">
+        <div id="stage-title">Stage 1: Clear Reverie</div>
+        <div class="hud-element" id="time-display">Time: 00:00</div>
+    </div>
+
+    <!-- Dev Menu -->
+    <div id="dev-menu">
+        <p>Developer Skip Stage</p>
+        <button class="dev-btn" onclick="skipToStage(1)">1</button>
+        <button class="dev-btn" onclick="skipToStage(2)">2</button>
+        <button class="dev-btn" onclick="skipToStage(3)">3</button>
+        <button class="dev-btn" onclick="skipToStage(4)">4</button>
+        <button class="dev-btn" onclick="skipToStage(5)">5</button>
+        <button class="dev-btn" onclick="skipToStage(6)">6</button>
+    </div>
+
+    <script>
+        // --- GAME TIMELINE CONFIGURATION ---
+        const STAGE_DURATION = 300; // Each stage lasts 5 minutes (300 seconds)
+        const TOTAL_STAGES = 6;
+        let gameTime = 0; // Current time in seconds
+        let currentStage = 1;
+        let isGameRunning = false;
+
+        // --- AUDIO SOURCE CONFIGURATION ---
+        // Pointing directly to the uncut .m4a files provided
+        const AUDIO_FILES = {
+            1: "audio/Its just a burning memory.m4a",
+            2: "audio/A losing battle is raging.m4a",
+            3: "audio/Back there Benjamin.m4a",
+            4: "audio/Stage 4 Post Awareness Confusions.m4a",
+            5: "audio/Stage 5 Advanced plaque entanglements.m4a",
+            6: "audio/Stage 6 Place in the World fades away.m4a"
+        };
+
+        const STAGE_NAMES = {
+            1: "Stage 1: Clear Reverie",
+            2: "Stage 2: The First Hesitation",
+            3: "Stage 3: Entangled Realities",
+            4: "Stage 4: Post-Awareness Static",
+            5: "Stage 5: The Great Confusion",
+            6: "Stage 6: Terminal Silence"
+        };
+
+        // Memories whispered during focal interactions
+        const MEMORIES = [
+            "We used to walk along the seaside, holding hands...",
+            "Where did I put my brass keychain?",
+            "Remember the wedding day, the sun was exceptionally bright.",
+            "I can smell the coffee brewing, but the kitchen is empty.",
+            "Who was that standing in the doorway? She looked familiar...",
+            "It is cold. I think it is autumn, or perhaps winter."
+        ];
+
+        // --- CORE GAME VARIABLES ---
+        let scene, camera, renderer;
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        let velocity = new THREE.Vector3();
+        let direction = new THREE.Vector3();
+        let clock = new THREE.Clock();
+
+        // Camera control variables (Pointer Lock fallback implementation)
+        let pitch = 0, yaw = 0;
+        const mouseSensitivity = 0.002;
+        
+        // Non-Euclidean Memory Grid System
+        const chunks = new Map();
+        const chunkSize = 15; // Size of each room tile
+        let playerGridPos = { x: 0, z: 0 };
+
+        // Gravity control
+        let currentGravity = new THREE.Vector3(0, -1, 0);
+        let targetGravity = new THREE.Vector3(0, -1, 0);
+        let targetUp = new THREE.Vector3(0, 1, 0);
+        let currentUp = new THREE.Vector3(0, 1, 0);
+
+        // Procedural Textures & Materials Caching
+        let materials = {};
+        let textures = {};
+
+        // Audio System State
+        let audioCtx, activeAudioElement, activeSourceNode;
+        let filterNode, delayNode, feedbackGain, outputGain;
+
+        // Scene Entities
+        let playerGroup; // Node holding camera to handle clean rotating gravity coordinate systems
+        let focalPoints = [];
+        let finalSceneObjects = []; // Holds chair and clock for Stage 6
+
+        // Initialize Web Audio Context and Dynamic Effects chain
+        function initAudio() {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Lowpass filter representing mental muffling/dampening
+                filterNode = audioCtx.createBiquadFilter();
+                filterNode.type = "lowpass";
+                filterNode.frequency.setValueAtTime(10000, audioCtx.currentTime);
+
+                // Delay / Echo node representing memory echoes/overlapping loops
+                delayNode = audioCtx.createDelay(5.0);
+                delayNode.delayTime.setValueAtTime(0.0, audioCtx.currentTime);
+
+                feedbackGain = audioCtx.createGain();
+                feedbackGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
+
+                outputGain = audioCtx.createGain();
+                outputGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+
+                // Connect sound design loop
+                delayNode.connect(feedbackGain);
+                feedbackGain.connect(delayNode); // feedback loop
+                
+                // Main route: Source -> Filter -> Output
+                // Sub-route: Source -> Delay -> Output
+            } catch(e) {
+                console.warn("Web Audio API not supported", e);
+            }
+        }
+
+        // Start playing the designated stage track with corresponding parameters
+        function playStageAudio(stageNum) {
+            if (!audioCtx) return;
+
+            // Fade out and terminate existing audio safely
+            if (activeAudioElement) {
+                const prevElement = activeAudioElement;
+                const prevGain = outputGain;
+                // Soft fade transition
+                let fadeVol = 1.0;
+                let fadeInterval = setInterval(() => {
+                    fadeVol -= 0.1;
+                    if (fadeVol <= 0) {
+                        clearInterval(fadeInterval);
+                        prevElement.pause();
+                        prevElement.src = "";
+                    } else {
+                        prevElement.volume = fadeVol;
+                    }
+                }, 100);
+            }
+
+            // Create new streaming HTML5 audio context to prevent system overhead
+            const audio = new Audio();
+            audio.src = AUDIO_FILES[stageNum];
+            audio.crossOrigin = "anonymous";
+            audio.loop = stageNum !== 6; // Stage 6 manages its own termination
+            activeAudioElement = audio;
+
+            // Set up Web Audio connections
+            if (activeSourceNode) {
+                activeSourceNode.disconnect();
+            }
+            activeSourceNode = audioCtx.createMediaElementSource(audio);
+            
+            // Reconnect Web Audio routing graph
+            activeSourceNode.connect(filterNode);
+            activeSourceNode.connect(delayNode);
+            
+            filterNode.connect(outputGain);
+            delayNode.connect(outputGain);
+            outputGain.connect(audioCtx.destination);
+
+            // Manage time jumps for uncut tracks
+            if (stageNum === 6) {
+                // Jump to the 13-minute mark (780s) to catch drone transition and 15:30 choir [1]
+                audio.addEventListener('loadedmetadata', () => {
+                    audio.currentTime = 780;
+                });
+            } else {
+                audio.currentTime = 0;
+            }
+
+            // Update effect chain properties on runtime based on stage decay
+            applyAudioDecay(stageNum);
+
+            // Attempt playback inside user click thread
+            audio.play().catch(e => console.warn("Audio playback blocked", e));
+        }
+
+        // Apply audio deterioration metrics per stage
+        function applyAudioDecay(stageNum) {
+            if (!audioCtx) return;
+            const t = audioCtx.currentTime;
+
+            switch(stageNum) {
+                case 1:
+                    filterNode.frequency.linearRampToValueAtTime(12000, t + 2);
+                    delayNode.delayTime.linearRampToValueAtTime(0.0, t + 2);
+                    feedbackGain.gain.linearRampToValueAtTime(0.0, t + 2);
+                    break;
+                case 2:
+                    filterNode.frequency.linearRampToValueAtTime(4000, t + 5);
+                    delayNode.delayTime.linearRampToValueAtTime(0.3, t + 5);
+                    feedbackGain.gain.linearRampToValueAtTime(0.2, t + 5);
+                    break;
+                case 3:
+                    // Intense pitch wavering can be simulated with rapid LFO,
+                    // here we heavily clamp high frequencies and introduce a heavy metallic echo
+                    filterNode.frequency.linearRampToValueAtTime(1200, t + 5);
+                    delayNode.delayTime.linearRampToValueAtTime(0.5, t + 5);
+                    feedbackGain.gain.linearRampToValueAtTime(0.4, t + 5);
+                    break;
+                case 4:
+                    // Drifting static and distant echoes
+                    filterNode.frequency.linearRampToValueAtTime(800, t + 5);
+                    delayNode.delayTime.linearRampToValueAtTime(1.2, t + 5);
+                    feedbackGain.gain.linearRampToValueAtTime(0.5, t + 5);
+                    break;
+                case 5:
+                    // Heavily distorted, drowned out low-frequency rumble
+                    filterNode.frequency.linearRampToValueAtTime(350, t + 5);
+                    delayNode.delayTime.linearRampToValueAtTime(2.0, t + 5);
+                    feedbackGain.gain.linearRampToValueAtTime(0.65, t + 5);
+                    break;
+                case 6:
+                    // Beautiful organ sequence will clear out of filters once hit
+                    // We start muffled during drone, then expand during the choir climax
+                    filterNode.frequency.linearRampToValueAtTime(600, t + 5);
+                    delayNode.delayTime.linearRampToValueAtTime(1.5, t + 5);
+                    feedbackGain.gain.linearRampToValueAtTime(0.3, t + 5);
+                    break;
+            }
+        }
+
+        // Procedural Textures Generation via HTML5 Canvas
+        function createProceduralTextures() {
+            // Helper canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            // 1. Carpet Texture
+            ctx.fillStyle = '#dbcca9';
+            ctx.fillRect(0,0,256,256);
+            for(let i=0; i<30000; i++) {
+                let size = Math.random() * 1.5;
+                let opacity = Math.random() * 0.15;
+                ctx.fillStyle = Math.random() > 0.5 ? `rgba(255,255,255,${opacity})` : `rgba(80,60,30,${opacity})`;
+                ctx.fillRect(Math.random()*256, Math.random()*256, size, size);
+            }
+            textures.carpet = new THREE.CanvasTexture(canvas);
+            textures.carpet.wrapS = THREE.RepeatWrapping;
+            textures.carpet.wrapT = THREE.RepeatWrapping;
+
+            // 2. Wallpaper Texture (Cream Yellow with Vintage Floral Stripes)
+            ctx.fillStyle = '#f4ecd8';
+            ctx.fillRect(0,0,256,256);
+            ctx.fillStyle = '#e8dcb9';
+            // Vertical stripes
+            for(let i=0; i<256; i+=32) {
+                ctx.fillRect(i, 0, 8, 256);
+            }
+            // Small tiny flower shapes
+            ctx.fillStyle = '#c7b383';
+            for(let x=16; x<256; x+=32) {
+                for(let y=16; y<256; y+=32) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, 2, 0, Math.PI*2);
+                    ctx.fill();
+                    // petals
+                    ctx.fillRect(x-4, y-1, 8, 2);
+                    ctx.fillRect(x-1, y-4, 2, 8);
+                }
+            }
+            textures.wallpaper = new THREE.CanvasTexture(canvas);
+            textures.wallpaper.wrapS = THREE.RepeatWrapping;
+            textures.wallpaper.wrapT = THREE.RepeatWrapping;
+
+            // 3. Concrete Texture (Stage 3 & 4 Decay)
+            const canvasConcrete = document.createElement('canvas');
+            canvasConcrete.width = 256;
+            canvasConcrete.height = 256;
+            const ctxC = canvasConcrete.getContext('2d');
+            ctxC.fillStyle = '#5c5a56';
+            ctxC.fillRect(0,0,256,256);
+            for(let i=0; i<40000; i++) {
+                let size = Math.random() * 2;
+                let opacity = Math.random() * 0.25;
+                ctxC.fillStyle = Math.random() > 0.5 ? `rgba(255,255,255,${opacity})` : `rgba(0,0,0,${opacity})`;
+                ctxC.fillRect(Math.random()*256, Math.random()*256, size, size);
+            }
+            textures.concrete = new THREE.CanvasTexture(canvasConcrete);
+            textures.concrete.wrapS = THREE.RepeatWrapping;
+            textures.concrete.wrapT = THREE.RepeatWrapping;
+        }
+
+        // Set up WebGL renderer, camera node rigs, and atmospheric lighting
+        function initScene() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0a);
+            scene.fog = new THREE.FogExp2(0x0a0a0a, 0.05);
+
+            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 100);
+            
+            // Create camera rig holding the dynamic gravity alignment
+            playerGroup = new THREE.Group();
+            playerGroup.position.set(0, 1.8, 0);
+            playerGroup.add(camera);
+            scene.add(playerGroup);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            container.appendChild(renderer.domElement);
+
+            createProceduralTextures();
+
+            // Setup Materials
+            materials.carpet = new THREE.MeshStandardMaterial({ map: textures.carpet, roughness: 0.9, bumpMap: textures.carpet, bumpScale: 0.02 });
+            materials.wallpaper = new THREE.MeshStandardMaterial({ map: textures.wallpaper, roughness: 0.7, bumpMap: textures.wallpaper, bumpScale: 0.01 });
+            materials.concrete = new THREE.MeshStandardMaterial({ map: textures.concrete, roughness: 0.85, bumpMap: textures.concrete, bumpScale: 0.04 });
+            materials.black = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            materials.wood = new THREE.MeshStandardMaterial({ color: 0x2a1a0c, roughness: 0.6 });
+            materials.brass = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.8, roughness: 0.2 });
+
+            // Ambient fill
+            const ambientLight = new THREE.AmbientLight(0x1a1a1a);
+            scene.add(ambientLight);
+
+            // Re-render handler
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- CAMERA CONTROLLER (POINTER LOCK IMPLEMENTATION) ---
+        const startBtn = document.getElementById('start-btn');
+        const uiContainer = document.getElementById('ui-container');
+
+        startBtn.addEventListener('click', () => {
+            document.body.requestPointerLock();
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+            if (document.pointerLockElement === document.body) {
+                uiContainer.style.opacity = 0;
+                setTimeout(() => { uiContainer.style.display = 'none'; }, 1500);
+                document.getElementById('hud').style.display = 'block';
+                document.getElementById('reticle').style.display = 'block';
+                document.getElementById('dev-menu').style.display = 'block';
+                
+                if (!isGameRunning) {
+                    isGameRunning = true;
+                    initAudio();
+                    playStageAudio(1);
+                    clock.getDelta(); // reset clock delta
+                } else if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            } else {
+                uiContainer.style.display = 'flex';
+                uiContainer.style.opacity = 1;
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (document.pointerLockElement !== document.body) return;
+
+            yaw -= e.movementX * mouseSensitivity;
+            pitch -= e.movementY * mouseSensitivity;
+
+            // Clamp vertical rotation
+            pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, pitch));
+
+            // Apply rotations relative to active gravity state matrix
+            camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
+        });
+
+        // Input monitoring
+        const onKeyDown = function (event) {
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    moveForward = true;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    moveLeft = true;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    moveBackward = true;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    moveRight = true;
+                    break;
+                case 'KeyE':
+                    triggerInteraction();
+                    break;
+            }
+        };
+
+        const onKeyUp = function (event) {
+            switch (event.code) {
+                case 'ArrowUp':
+                case 'KeyW':
+                    moveForward = false;
+                    break;
+                case 'ArrowLeft':
+                case 'KeyA':
+                    moveLeft = false;
+                    break;
+                case 'ArrowDown':
+                case 'KeyS':
+                    moveBackward = false;
+                    break;
+                case 'ArrowRight':
+                case 'KeyD':
+                    moveRight = false;
+                    break;
+            }
+        };
+
+        document.addEventListener('keydown', onKeyDown);
+        document.addEventListener('keyup', onKeyUp);
+        document.addEventListener('click', () => {
+            if (document.pointerLockElement === document.body) {
+                triggerInteraction();
+            }
+        });
+
+        // --- NON-EUCLIDEAN DYNAMIC MEMORY GRID GENERATION ---
+        
+        // Spawn chunks procedurally on grid coordinates
+        function getChunkKey(x, z) {
+            return `${x},${z}`;
+        }
+
+        function createWallSconce(group, x, y, z, rotationY) {
+            const sconceGroup = new THREE.Group();
+            sconceGroup.position.set(x, y, z);
+            sconceGroup.rotation.y = rotationY;
+
+            // Brass fixture arm
+            const armGeom = new THREE.CylinderGeometry(0.02, 0.02, 0.3);
+            const arm = new THREE.Mesh(armGeom, materials.brass);
+            arm.rotation.x = Math.PI / 2;
+            sconceGroup.add(arm);
+
+            // Small light bulb
+            const bulbGeom = new THREE.SphereGeometry(0.08, 8, 8);
+            const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffe59c });
+            const bulb = new THREE.Mesh(bulbGeom, bulbMat);
+            bulb.position.set(0, 0, 0.15);
+            sconceGroup.add(bulb);
+
+            // Light object casting shadows based on active stage
+            const lightColor = currentStage >= 3 ? 0xccffea : 0xffe6a3;
+            const lightIntensity = currentStage === 4 ? 0.3 : (currentStage === 5 ? 0.1 : 0.95);
+            const light = new THREE.PointLight(lightColor, lightIntensity, 8);
+            light.position.set(0, 0, 0.2);
+            light.castShadow = currentStage < 4; // Turn off shadow mapping in post-awareness stages for memory optimization
+            light.shadow.mapSize.width = 512;
+            light.shadow.mapSize.height = 512;
+            sconceGroup.add(light);
+
+            // Add to chunk container
+            group.add(sconceGroup);
+        }
+
+        function generateCorridorChunk(gx, gz) {
+            const group = new THREE.Group();
+            group.position.set(gx * chunkSize, 0, gz * chunkSize);
+
+            // Determine rendering style per stage configuration
+            let floorMat = materials.carpet;
+            let wallMat = materials.wallpaper;
+
+            if (currentStage >= 3) {
+                wallMat = materials.concrete;
+            }
+            if (currentStage >= 4) {
+                floorMat = materials.concrete;
+            }
+
+            // Standard Corridor Segment
+            // Floor
+            if (currentStage < 4) {
+                const floorGeom = new THREE.PlaneGeometry(chunkSize, chunkSize);
+                const floor = new THREE.Mesh(floorGeom, floorMat);
+                floor.rotation.x = -Math.PI / 2;
+                floor.receiveShadow = true;
+                group.add(floor);
+            } else {
+                // Fragmented floating platforms representing Stage 4 & 5 post-awareness degradation
+                for(let i = 0; i < 4; i++) {
+                    const blockGeom = new THREE.BoxGeometry(3 + Math.random()*4, 0.4, 3 + Math.random()*4);
+                    const block = new THREE.Mesh(blockGeom, floorMat);
+                    block.position.set(
+                        (Math.random() - 0.5) * 8,
+                        (Math.random() - 0.5) * 2 - 0.5,
+                        (Math.random() - 0.5) * 8
+                    );
+                    block.rotation.y = Math.random() * Math.PI;
+                    group.add(block);
+                }
+            }
+
+            // Ceiling (Dissolves in Stage 4 & 5)
+            if (currentStage < 4) {
+                const ceilingGeom = new THREE.PlaneGeometry(chunkSize, chunkSize);
+                const ceiling = new THREE.Mesh(ceilingGeom, floorMat); // Using same texture map to represent continuous enclosures
+                ceiling.rotation.x = Math.PI / 2;
+                ceiling.position.y = 3.5;
+                group.add(ceiling);
+            }
+
+            // Walls (Left and Right)
+            if (currentStage < 4) {
+                const wallGeom = new THREE.PlaneGeometry(chunkSize, 3.5);
+                
+                // Left Wall
+                const wallLeft = new THREE.Mesh(wallGeom, wallMat);
+                wallLeft.position.set(-chunkSize/2, 1.75, 0);
+                wallLeft.rotation.y = Math.PI / 2;
+                wallLeft.receiveShadow = true;
+                wallLeft.castShadow = true;
+                group.add(wallLeft);
+
+                // Right Wall
+                const wallRight = new THREE.Mesh(wallGeom, wallMat);
+                wallRight.position.set(chunkSize/2, 1.75, 0);
+                wallRight.rotation.y = -Math.PI / 2;
+                wallRight.receiveShadow = true;
+                wallRight.castShadow = true;
+                group.add(wallRight);
+
+                // Wall lighting
+                createWallSconce(group, -chunkSize/2 + 0.1, 2.2, 0, Math.PI/2);
+                createWallSconce(group, chunkSize/2 - 0.1, 2.2, 0, -Math.PI/2);
+            } else if (currentStage === 5) {
+                // Stage 5 Monolithic massive structures drifting
+                const colGeom = new THREE.BoxGeometry(10, 80, 10);
+                const col = new THREE.Mesh(colGeom, materials.concrete);
+                col.position.set((Math.random() - 0.5) * 30, -30, (Math.random() - 0.5) * 30);
+                col.rotation.set(Math.random()*0.3, Math.random()*3, Math.random()*0.3);
+                group.add(col);
+            }
+
+            // Interactive memory objects (Focal points)
+            // Spawn with probability
+            if (currentStage < 4 && Math.random() > 0.65) {
+                spawnFocalPoint(group, gx, gz);
+            }
+
+            // Stage 3 kinetic sliding walls (Tectonic movements)
+            if (currentStage === 3) {
+                const slideGeom = new THREE.BoxGeometry(0.5, 3.5, 6);
+                const slideWall = new THREE.Mesh(slideGeom, materials.concrete);
+                slideWall.position.set(0, 1.75, (Math.random() - 0.5) * 4);
+                slideWall.castShadow = true;
+                // Hook update function
+                slideWall.userData = {
+                    type: "sliding",
+                    speed: 0.5 + Math.random() * 0.8,
+                    range: 3.5,
+                    baseX: 0
+                };
+                group.add(slideWall);
+            }
+
+            // Stage 2/3 Colored Gravity Shifting Plates
+            if (currentStage === 2 || currentStage === 3) {
+                const padGeom = new THREE.BoxGeometry(2, 0.05, 2);
+                const padMat = new THREE.MeshBasicMaterial({ color: 0x3d705d, transparent: true, opacity: 0.5 });
+                const pad = new THREE.Mesh(padGeom, padMat);
+                pad.position.set((Math.random()-0.5)*4, 0.03, (Math.random()-0.5)*4);
+                pad.userData = {
+                    type: "gravityPad",
+                    dir: new THREE.Vector3(
+                        Math.random() > 0.5 ? 1 : -1,
+                        0,
+                        0
+                    ).normalize()
+                };
+                group.add(pad);
+            }
+
+            scene.add(group);
+            chunks.set(getChunkKey(gx, gz), group);
+        }
+
+        // Spawn interactive memory points
+        function spawnFocalPoint(group, gx, gz) {
+            // Create a small wooden pedestal table
+            const tableGroup = new THREE.Group();
+            tableGroup.position.set((Math.random() - 0.5) * 4, 0, (Math.random() - 0.5) * 4);
+
+            const baseGeom = new THREE.CylinderGeometry(0.3, 0.3, 0.05);
+            const base = new THREE.Mesh(baseGeom, materials.wood);
+            base.position.y = 0.025;
+            tableGroup.add(base);
+
+            const legGeom = new THREE.CylinderGeometry(0.04, 0.04, 0.9);
+            const leg = new THREE.Mesh(legGeom, materials.wood);
+            leg.position.y = 0.5;
+            tableGroup.add(leg);
+
+            const topGeom = new THREE.CylinderGeometry(0.45, 0.45, 0.05);
+            const top = new THREE.Mesh(topGeom, materials.wood);
+            top.position.y = 0.95;
+            tableGroup.add(top);
+
+            // Memory glowing artifact
+            const itemGeom = new THREE.DodecahedronGeometry(0.1);
+            const itemMat = new THREE.MeshBasicMaterial({ color: 0xffd175, wireframe: true });
+            const item = new THREE.Mesh(itemGeom, itemMat);
+            item.position.y = 1.15;
+            item.userData = {
+                type: "artifact",
+                id: Math.floor(Math.random() * MEMORIES.length),
+                parentChunk: getChunkKey(gx, gz)
+            };
+            tableGroup.add(item);
+            
+            focalPoints.push(item);
+
+            group.add(tableGroup);
+        }
+
+        // Keep track of grid updates based on player spatial location
+        function updateChunks() {
+            if (currentStage === 6) {
+                // Instantly remove structural generation segments for Stage 6 void
+                clearAllChunks();
+                return;
+            }
+
+            const px = playerGroup.position.x;
+            const pz = playerGroup.position.z;
+
+            const cx = Math.floor((px + chunkSize/2) / chunkSize);
+            const cz = Math.floor((pz + chunkSize/2) / chunkSize);
+
+            if (cx !== playerGridPos.x || cz !== playerGridPos.y) {
+                playerGridPos.x = cx;
+                playerGridPos.y = cz;
+
+                // Non-Euclidean Memory Buffer generation range
+                const range = 2; 
+                const keepSet = new Set();
+
+                for(let x = cx - range; x <= cx + range; x++) {
+                    for(let z = cz - range; z <= cz + range; z++) {
+                        const key = getChunkKey(x, z);
+                        keepSet.add(key);
+                        if (!chunks.has(key)) {
+                            generateCorridorChunk(x, z);
+                        }
+                    }
+                }
+
+                // Delete remote chunks behind the player view-cone to enforce spatial decay
+                for (const [key, obj] of chunks.entries()) {
+                    if (!keepSet.has(key)) {
+                        // Check dot product to see if chunk is out of view before sweeping
+                        const chunkPos = obj.position.clone();
+                        const toChunk = chunkPos.sub(playerGroup.position);
+                        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+                        const dot = toChunk.normalize().dot(forward);
+
+                        // If behind player view-cone or very far, destroy it
+                        if (dot < 0.2 || toChunk.length() > 40) {
+                            scene.remove(obj);
+                            
+                            // Clear stored artifacts
+                            focalPoints = focalPoints.filter(fp => fp.userData.parentChunk !== key);
+                            
+                            chunks.delete(key);
+                        }
+                    }
+                }
+            }
+        }
+
+        function clearAllChunks() {
+            for (const [key, obj] of chunks.entries()) {
+                scene.remove(obj);
+            }
+            chunks.clear();
+            focalPoints = [];
+        }
+
+        // Stage 6 Specific Scene Setup
+        function initStage6Environment() {
+            clearAllChunks();
+            scene.fog.color.setHex(0x020202);
+            scene.fog.density = 0.02;
+
+            // Simple floor grid to provide spatial relativity
+            const floorGeom = new THREE.PlaneGeometry(100, 100);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 1.0 });
+            const floor = new THREE.Mesh(floorGeom, floorMat);
+            floor.rotation.x = -Math.PI/2;
+            scene.add(floor);
+            finalSceneObjects.push(floor);
+
+            // Procedurally modeled single wooden armchair in the void
+            const chairGroup = new THREE.Group();
+            chairGroup.position.set(0, 0, -6);
+
+            // Legs
+            const legG = new THREE.CylinderGeometry(0.04, 0.04, 0.6);
+            for(let x = -0.4; x <= 0.4; x += 0.8) {
+                for(let z = -0.4; z <= 0.4; z += 0.8) {
+                    const leg = new THREE.Mesh(legG, materials.wood);
+                    leg.position.set(x, 0.3, z);
+                    chairGroup.add(leg);
+                }
+            }
+
+            // Cushion seat
+            const seatG = new THREE.BoxGeometry(1.0, 0.15, 1.0);
+            const cushionMat = new THREE.MeshStandardMaterial({ color: 0x5a1a1a, roughness: 0.8 });
+            const seat = new THREE.Mesh(seatG, cushionMat);
+            seat.position.y = 0.65;
+            chairGroup.add(seat);
+
+            // Chair backrest
+            const backG = new THREE.BoxGeometry(1.0, 1.0, 0.15);
+            const back = new THREE.Mesh(backG, cushionMat);
+            back.position.set(0, 1.15, -0.425);
+            chairGroup.add(back);
+
+            // Armrests
+            const armG = new THREE.BoxGeometry(0.15, 0.15, 1.0);
+            const leftArm = new THREE.Mesh(armG, materials.wood);
+            leftArm.position.set(-0.48, 0.8, 0);
+            const rightArm = new THREE.Mesh(armG, materials.wood);
+            rightArm.position.set(0.48, 0.8, 0);
+            chairGroup.add(leftArm);
+            chairGroup.add(rightArm);
+
+            scene.add(chairGroup);
+            finalSceneObjects.push(chairGroup);
+
+            // Grandfather clock
+            const clockGroup = new THREE.Group();
+            clockGroup.position.set(3, 0, -6);
+            clockGroup.rotation.y = -Math.PI / 4;
+
+            // Clock frame body
+            const baseG = new THREE.BoxGeometry(1.0, 0.4, 0.8);
+            const base = new THREE.Mesh(baseG, materials.wood);
+            base.position.y = 0.2;
+            clockGroup.add(base);
+
+            const midG = new THREE.BoxGeometry(0.8, 1.8, 0.6);
+            const mid = new THREE.Mesh(midG, materials.wood);
+            mid.position.y = 1.3;
+            clockGroup.add(mid);
+
+            const headG = new THREE.BoxGeometry(1.0, 0.8, 0.8);
+            const head = new THREE.Mesh(headG, materials.wood);
+            head.position.y = 2.6;
+            clockGroup.add(head);
+
+            // Handless clock face representation
+            const faceG = new THREE.CircleGeometry(0.3, 32);
+            const faceMat = new THREE.MeshBasicMaterial({ color: 0xe8e5d8 });
+            const face = new THREE.Mesh(faceG, faceMat);
+            face.position.set(0, 2.6, 0.41);
+            clockGroup.add(face);
+
+            scene.add(clockGroup);
+            finalSceneObjects.push(clockGroup);
+
+            // Ambient spot lighting directly over chair
+            const topLight = new THREE.SpotLight(0xfffaed, 1.5, 15, Math.PI / 4, 0.5);
+            topLight.position.set(0, 8, -6);
+            topLight.target = chairGroup;
+            scene.add(topLight);
+            finalSceneObjects.push(topLight);
+        }
+
+        // --- INTERACTION LOGIC (FOCAL POINTS) ---
+        function triggerInteraction() {
+            if (currentStage === 6) {
+                // Terminal trigger: checking distance to sit in chair
+                const chairPos = new THREE.Vector3(0, 0, -6);
+                if (playerGroup.position.distanceTo(chairPos) < 2.5) {
+                    executeTerminalTransition();
+                }
+                return;
+            }
+
+            // Raycaster matching standard reticle center
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+            
+            // Check collisions with active floating artifacts
+            const intersects = raycaster.intersectObjects(focalPoints);
+            if (intersects.length > 0) {
+                const item = intersects[0].object;
+                if (item.userData && item.userData.type === "artifact") {
+                    displayMemory(item.userData.id, item);
+                }
+            }
+        }
+
+        function displayMemory(id, obj) {
+            // Flash screen gold representing mental recall
+            const flash = document.getElementById('flash-overlay');
+            flash.style.opacity = 1;
+            setTimeout(() => { flash.style.opacity = 0; }, 120);
+
+            // Remove object from scene and arrays to avoid repeat interactions
+            focalPoints = focalPoints.filter(fp => fp !== obj);
+            obj.parent.remove(obj);
+
+            // Display written memories
+            const subs = document.getElementById('subtitles');
+            subs.innerText = `"${MEMORIES[id]}"`;
+            subs.style.opacity = 1;
+            
+            // Soft temporal duck of sound to clarify message
+            if (outputGain) {
+                outputGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                outputGain.gain.linearRampToValueAtTime(1.0, audioCtx.currentTime + 3.0);
+            }
+
+            setTimeout(() => {
+                subs.style.opacity = 0;
+            }, 3500);
+        }
+
+        // Ending sequence - sitting down
+        function executeTerminalTransition() {
+            // Anchor player camera inside chair position
+            playerGroup.position.set(0, 1.25, -5.6);
+            camera.quaternion.setFromEuler(new THREE.Euler(0, Math.PI, 0)); // look forward
+            
+            // Lock inputs
+            moveForward = moveBackward = moveLeft = moveRight = false;
+            document.exitPointerLock();
+
+            const subs = document.getElementById('subtitles');
+            subs.innerText = "... Friends past reunited ...";
+            subs.style.opacity = 1;
+
+            // Deep fade out transition over 15 seconds matching final clock fade
+            setTimeout(() => {
+                subs.style.opacity = 0;
+                let fadeVol = 1.0;
+                let audioInterval = setInterval(() => {
+                    fadeVol -= 0.05;
+                    if (fadeVol <= 0) {
+                        clearInterval(audioInterval);
+                        if (activeAudioElement) activeAudioElement.pause();
+                    } else if (outputGain) {
+                        outputGain.gain.setValueAtTime(fadeVol, audioCtx.currentTime);
+                    }
+                }, 400);
+
+                // Black out screen
+                const overlay = document.getElementById('ui-container');
+                overlay.style.display = 'flex';
+                overlay.style.backgroundColor = '#000';
+                overlay.style.opacity = 1;
+                document.getElementById('start-screen').innerHTML = "<h1 style='color: #444; font-size: 1.5rem; letter-spacing: 1px;'>The world has faded.</h1>";
+            }, 10000);
+        }
+
+        // --- DEVELOPMENT SKIP OVERRIDES ---
+        function skipToStage(stageNum) {
+            if (!isGameRunning) return;
+            currentStage = stageNum;
+            gameTime = (stageNum - 1) * STAGE_DURATION;
+            
+            // Clean dynamic entities
+            clearAllChunks();
+            
+            // Refresh stage properties
+            document.getElementById('stage-title').innerText = STAGE_NAMES[stageNum];
+            
+            if (stageNum === 6) {
+                initStage6Environment();
+            } else {
+                // Tear down stage 6 objects
+                finalSceneObjects.forEach(obj => scene.remove(obj));
+                finalSceneObjects = [];
+                scene.fog.color.setHex(0x0a0a0a);
+                scene.fog.density = 0.05;
+                playerGridPos = { x: 999, z: 999 }; // force generation trigger
+            }
+
+            playStageAudio(stageNum);
+        }
+
+        // --- MAIN UPDATE GAME LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (!isGameRunning) return;
+
+            const delta = clock.getDelta();
+            
+            // Keep track of master timeline
+            gameTime += delta;
+            
+            // Handle automatic stage changes
+            const calculatedStage = Math.min(TOTAL_STAGES, Math.floor(gameTime / STAGE_DURATION) + 1);
+            if (calculatedStage !== currentStage) {
+                skipToStage(calculatedStage);
+            }
+
+            // Update on-screen HUD
+            const min = Math.floor(gameTime / 60);
+            const sec = Math.floor(gameTime % 60);
+            document.getElementById('time-display').innerText = `Time: ${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+
+            // Render updates based on active gravity systems
+            currentUp.lerp(targetUp, delta * 3.0); // Smooth gravity align interpolations
+
+            // Apply camera/movement matrices relative to player configuration
+            let forwardVec = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+            let rightVec = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+
+            // Flatten projection direction vector on current gravity horizon to keep locomotion fluid
+            forwardVec.projectOnPlane(currentUp).normalize();
+            rightVec.projectOnPlane(currentUp).normalize();
+
+            direction.set(0, 0, 0);
+            if (moveForward) direction.add(forwardVec);
+            if (moveBackward) direction.sub(forwardVec);
+            if (moveLeft) direction.sub(rightVec);
+            if (moveRight) direction.add(rightVec);
+            direction.normalize();
+
+            // Simple first person sliding physics logic
+            const currentSpeed = currentStage === 5 ? 1.5 + Math.sin(gameTime)*0.8 : 3.0; // Stage 5 movement drift
+            velocity.addScaledVector(direction, currentSpeed * 25.0 * delta);
+            velocity.addScaledVector(velocity, -8.0 * delta); // linear damping friction
+
+            // Update position
+            playerGroup.position.addScaledVector(velocity, delta);
+
+            // Height alignment relative to local floor grid system (Stage 6 maintains flat floor, 4/5 maintains float)
+            if (currentStage < 4) {
+                playerGroup.position.y = 1.8; // Hard clamp horizontal floor level
+            } else if (currentStage === 5) {
+                // Subtle breathing wave simulation representing losing spatial balance
+                playerGroup.position.y += Math.sin(gameTime * 0.5) * 0.005;
+            }
+
+            // Core non-Euclidean generation sweep
+            updateChunks();
+
+            // Handle Stage-specific animations
+            chunks.forEach((chunk) => {
+                chunk.children.forEach((child) => {
+                    // Update Stage 3 kinetic sliding walls
+                    if (child.userData && child.userData.type === "sliding") {
+                        child.position.x = child.userData.baseX + Math.sin(gameTime * child.userData.speed) * child.userData.range;
+                    }
+                    // Handle glowing focal rotations
+                    if (child.userData && child.userData.type === "artifact") {
+                        child.rotation.y += delta * 1.5;
+                        child.rotation.x += delta * 0.5;
+                    }
+                    // Gravity Pad Trigger checking
+                    if (child.userData && child.userData.type === "gravityPad") {
+                        const worldPos = new THREE.Vector3();
+                        child.getWorldPosition(worldPos);
+                        if (playerGroup.position.distanceTo(worldPos) < 1.2) {
+                            // Rotate target orientation axes to simulate gravity flip
+                            const localDir = child.userData.dir;
+                            targetGravity.copy(localDir).multiplyScalar(-1);
+                            targetUp.copy(localDir);
+                        }
+                    }
+                });
+            });
+
+            // Smoothly interpolate player up vector to handle gravity tilts
+            playerGroup.up.copy(currentUp);
+
+            renderer.render(scene, camera);
+        }
+
+        // Init Setup Run
+        initScene();
+        animate();
+    </script>
+</body>
+</html>
