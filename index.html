@@ -260,13 +260,14 @@
         let isGameRunning = false;
         let isMobile = false;
 
+        // Space characters strictly URL-encoded to %20 to avoid loading breaks
         const AUDIO_FILES = {
-            1: "audio/Its just a burning memory.m4a",
-            2: "audio/A losing battle is raging.m4a",
-            3: "audio/Back there Benjamin.m4a",
-            4: "audio/Stage 4 Post Awareness Confusions.m4a",
-            5: "audio/Stage 5 Advanced plaque entanglements.m4a",
-            6: "audio/Stage 6 Place in the World fades away.m4a"
+            1: "audio/Its%20just%20a%20burning%20memory.m4a",
+            2: "audio/A%20losing%20battle%20is%20raging.m4a",
+            3: "audio/Back%20there%20Benjamin.m4a",
+            4: "audio/Stage%204%20Post%20Awareness%20Confusions.m4a",
+            5: "audio/Stage%205%20Advanced%20plaque%20entanglements.m4a",
+            6: "audio/Stage%206%20Place%20in%20the%20World%20fades%20away.m4a"
         };
 
         const STAGE_NAMES = {
@@ -298,7 +299,7 @@
         
         const chunks = new Map();
         const chunkSize = 15; 
-        let playerGridPos = { x: 999, z: 999 }; // force map generation immediately
+        let playerGridPos = { x: 999, z: 999 };
 
         let currentGravity = new THREE.Vector3(0, -1, 0);
         let targetGravity = new THREE.Vector3(0, -1, 0);
@@ -308,55 +309,21 @@
         let materials = {};
         let textures = {};
 
-        // Single Stream HTML5 Audio setup (highly optimized fallback)
-        let audioCtx, audioStream, mediaSource;
-        let filterNode, delayNode, feedbackGain, outputGain;
+        // Simplified native audio loop (bypasses browser CORS rules perfectly)
+        let audioStream;
 
         let playerGroup; 
         let focalPoints = [];
         let finalSceneObjects = []; 
 
-        // Detect mobile users
         if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
             isMobile = true;
         }
 
         function initAudio() {
-            try {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
-                audioStream = new Audio();
-                audioStream.crossOrigin = "anonymous";
-                
-                filterNode = audioCtx.createBiquadFilter();
-                filterNode.type = "lowpass";
-                filterNode.frequency.setValueAtTime(12000, audioCtx.currentTime);
-
-                delayNode = audioCtx.createDelay(5.0);
-                delayNode.delayTime.setValueAtTime(0.0, audioCtx.currentTime);
-
-                feedbackGain = audioCtx.createGain();
-                feedbackGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
-
-                outputGain = audioCtx.createGain();
-                outputGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
-
-                delayNode.connect(feedbackGain);
-                feedbackGain.connect(delayNode); 
-
-                mediaSource = audioCtx.createMediaElementSource(audioStream);
-                mediaSource.connect(filterNode);
-                mediaSource.connect(delayNode);
-                
-                filterNode.connect(outputGain);
-                delayNode.connect(outputGain);
-                outputGain.connect(audioCtx.destination);
-            } catch(e) {
-                console.warn("AudioContext setup failed, falling back to standard audio stream.", e);
-                // Setup direct standard HTML5 fallback
-                audioStream = new Audio();
-                audioStream.crossOrigin = "anonymous";
-            }
+            // No AudioContext or WebAudioAPI is used.
+            // Playing directly through HTML5 audio ignores CORS restrictions
+            audioStream = new Audio();
         }
 
         function playStageAudio(stageNum) {
@@ -369,52 +336,32 @@
             // Handle uncut timestamps
             if (stageNum === 6) {
                 audioStream.addEventListener('loadedmetadata', function onMetadata() {
-                    audioStream.currentTime = 780; // Seek to 13:00 to hear drone transition [1]
+                    audioStream.currentTime = 780; // Seek to 13:00 to catch drone transition [1]
                     audioStream.removeEventListener('loadedmetadata', onMetadata);
                 });
             } else {
                 audioStream.currentTime = 0;
             }
 
+            // Adjust volume to represent mental decay
             applyAudioDecay(stageNum);
-            audioStream.play().catch(e => console.warn("Playback blocked or loading", e));
+
+            audioStream.play().catch(e => {
+                console.warn("Audio loading issue. Make sure your files are located in the 'audio/' directory.", e);
+            });
         }
 
         function applyAudioDecay(stageNum) {
-            if (!audioCtx) return;
-            const t = audioCtx.currentTime;
+            if (!audioStream) return;
 
+            // Fade the volume down as stages progress to simulate losing focus
             switch(stageNum) {
-                case 1:
-                    filterNode.frequency.linearRampToValueAtTime(12000, t + 2);
-                    delayNode.delayTime.linearRampToValueAtTime(0.0, t + 2);
-                    feedbackGain.gain.linearRampToValueAtTime(0.0, t + 2);
-                    break;
-                case 2:
-                    filterNode.frequency.linearRampToValueAtTime(3000, t + 5);
-                    delayNode.delayTime.linearRampToValueAtTime(0.2, t + 5);
-                    feedbackGain.gain.linearRampToValueAtTime(0.15, t + 5);
-                    break;
-                case 3:
-                    filterNode.frequency.linearRampToValueAtTime(1000, t + 5);
-                    delayNode.delayTime.linearRampToValueAtTime(0.4, t + 5);
-                    feedbackGain.gain.linearRampToValueAtTime(0.3, t + 5);
-                    break;
-                case 4:
-                    filterNode.frequency.linearRampToValueAtTime(700, t + 5);
-                    delayNode.delayTime.linearRampToValueAtTime(0.9, t + 5);
-                    feedbackGain.gain.linearRampToValueAtTime(0.4, t + 5);
-                    break;
-                case 5:
-                    filterNode.frequency.linearRampToValueAtTime(300, t + 5);
-                    delayNode.delayTime.linearRampToValueAtTime(1.5, t + 5);
-                    feedbackGain.gain.linearRampToValueAtTime(0.5, t + 5);
-                    break;
-                case 6:
-                    filterNode.frequency.linearRampToValueAtTime(800, t + 5);
-                    delayNode.delayTime.linearRampToValueAtTime(1.0, t + 5);
-                    feedbackGain.gain.linearRampToValueAtTime(0.2, t + 5);
-                    break;
+                case 1: audioStream.volume = 1.0; break;
+                case 2: audioStream.volume = 0.85; break;
+                case 3: audioStream.volume = 0.70; break;
+                case 4: audioStream.volume = 0.55; break;
+                case 5: audioStream.volume = 0.40; break;
+                case 6: audioStream.volume = 0.90; break; // Rise in volume during final choir [1]
             }
         }
 
@@ -482,20 +429,17 @@
 
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            // Disabled heavy renderer shadows completely to fix hardware crashing
             renderer.shadowMap.enabled = false; 
             container.appendChild(renderer.domElement);
 
             createProceduralTextures();
 
-            // Mobile-friendly, high performance materials
             materials.carpet = new THREE.MeshPhongMaterial({ map: textures.carpet, shininess: 2 });
             materials.wallpaper = new THREE.MeshPhongMaterial({ map: textures.wallpaper, shininess: 5 });
             materials.concrete = new THREE.MeshPhongMaterial({ map: textures.concrete, shininess: 2 });
             materials.wood = new THREE.MeshPhongMaterial({ color: 0x24160a, shininess: 10 });
             materials.brass = new THREE.MeshPhongMaterial({ color: 0xbfa15f, shininess: 80 });
 
-            // Generous ambient lighting to prevent absolute black screens
             const ambientLight = new THREE.AmbientLight(0x404040);
             scene.add(ambientLight);
 
@@ -512,7 +456,6 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // --- POINTER LOCK & MOBILE TRIGGER HANDLERS ---
         const startBtn = document.getElementById('start-btn');
         const uiContainer = document.getElementById('ui-container');
 
@@ -548,8 +491,6 @@
                     initAudio();
                     playStageAudio(1);
                     clock.getDelta();
-                } else if (audioCtx && audioCtx.state === 'suspended') {
-                    audioCtx.resume();
                 }
             } else {
                 uiContainer.style.display = 'flex';
@@ -557,7 +498,6 @@
             }
         });
 
-        // PC Looking rotation
         document.addEventListener('mousemove', (e) => {
             if (document.pointerLockElement !== document.body || isMobile) return;
 
@@ -567,7 +507,6 @@
             camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
         });
 
-        // --- MOBILE INPUT LOGIC (JOYSTICK + SWIPE TO LOOK) ---
         let touchStartX = 0, touchStartY = 0;
         let isLooking = false;
         let activeLookId = null;
@@ -577,7 +516,6 @@
             const knob = document.getElementById('joystick-knob');
             const joyMaxRadius = 60;
 
-            // Movement Touch Handler
             joystick.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 const touch = e.touches[0];
@@ -602,7 +540,6 @@
 
                 knob.style.transform = `translate(${x}px, ${y}px)`;
 
-                // Map joystick layout coordinates straight to locomotion velocity vectors
                 const nX = x / joyMaxRadius;
                 const nY = y / joyMaxRadius;
 
@@ -617,7 +554,6 @@
                 moveForward = moveBackward = moveLeft = moveRight = false;
             });
 
-            // Swipe to Look (Right half of mobile screen)
             window.addEventListener('touchstart', (e) => {
                 for (let i = 0; i < e.touches.length; i++) {
                     const t = e.touches[i];
@@ -666,7 +602,6 @@
             });
         }
 
-        // --- KEYBOARD CONTROLS (PC ONLY) ---
         const onKeyDown = function (event) {
             if (isMobile) return;
             switch (event.code) {
@@ -691,7 +626,6 @@
         document.addEventListener('keydown', onKeyDown);
         document.addEventListener('keyup', onKeyUp);
 
-        // --- PROCEDURAL ARCHITECTURE SPINNER ---
         function getChunkKey(x, z) {
             return `${x},${z}`;
         }
@@ -742,7 +676,6 @@
                 floor.rotation.x = -Math.PI / 2;
                 group.add(floor);
             } else {
-                // Fragmented floating panels
                 for(let i = 0; i < 3; i++) {
                     const blockGeom = new THREE.BoxGeometry(4 + Math.random()*3, 0.3, 4 + Math.random()*3);
                     const block = new THREE.Mesh(blockGeom, floorMat);
@@ -782,7 +715,6 @@
                 createWallSconce(group, -chunkSize/2 + 0.05, 2.2, 0, Math.PI/2);
                 createWallSconce(group, chunkSize/2 - 0.05, 2.2, 0, -Math.PI/2);
             } else if (currentStage === 5) {
-                // Massive blocks
                 const colGeom = new THREE.BoxGeometry(10, 60, 10);
                 const col = new THREE.Mesh(colGeom, materials.concrete);
                 col.position.set((Math.random() - 0.5) * 20, -25, (Math.random() - 0.5) * 20);
@@ -790,12 +722,10 @@
                 group.add(col);
             }
 
-            // Interactive memory artifacts
             if (currentStage < 4 && Math.random() > 0.6) {
                 spawnFocalPoint(group, gx, gz);
             }
 
-            // Stage 3 kinetic sliding walls
             if (currentStage === 3) {
                 const slideGeom = new THREE.BoxGeometry(0.4, 3.5, 5);
                 const slideWall = new THREE.Mesh(slideGeom, materials.concrete);
@@ -809,7 +739,6 @@
                 group.add(slideWall);
             }
 
-            // Stage 2/3 Gravity flipping zones
             if (currentStage === 2 || currentStage === 3) {
                 const padGeom = new THREE.BoxGeometry(1.8, 0.05, 1.8);
                 const padMat = new THREE.MeshBasicMaterial({ color: 0x3d705d, transparent: true, opacity: 0.6 });
@@ -893,7 +822,6 @@
                     }
                 }
 
-                // Discard distant chunks out of the view frustum to clear frame latency
                 for (const [key, obj] of chunks.entries()) {
                     if (!keepSet.has(key)) {
                         const chunkPos = obj.position.clone();
@@ -919,7 +847,6 @@
             focalPoints = [];
         }
 
-        // --- STAGE 6 ENVIRONMENT SETUP ---
         function initStage6Environment() {
             clearAllChunks();
             scene.fog.color.setHex(0x020202);
@@ -932,7 +859,6 @@
             scene.add(floor);
             finalSceneObjects.push(floor);
 
-            // Armchair Setup
             const chairGroup = new THREE.Group();
             chairGroup.position.set(0, 0, -6);
 
@@ -967,7 +893,6 @@
             scene.add(chairGroup);
             finalSceneObjects.push(chairGroup);
 
-            // Grandfather clock representation (with blank face)
             const clockGroup = new THREE.Group();
             clockGroup.position.set(2.5, 0, -5.5);
             clockGroup.rotation.y = -Math.PI / 4;
@@ -1003,7 +928,6 @@
             finalSceneObjects.push(topLight);
         }
 
-        // --- CORE INTERACTION DETECTOR ---
         function triggerInteraction() {
             if (currentStage === 6) {
                 const chairPos = new THREE.Vector3(0, 0, -6);
@@ -1025,10 +949,8 @@
             }
         }
 
-        // Interactive touch triggers for mobile screens
         window.addEventListener('touchstart', (e) => {
             if (!isMobile || !isGameRunning) return;
-            // Prevent triggering during movement/look actions
             const touch = e.touches[0];
             if (touch.clientX < 180 && touch.clientY > window.innerHeight - 180) return;
             if (touch.clientX > window.innerWidth / 2) return;
@@ -1047,11 +969,6 @@
             const subs = document.getElementById('subtitles');
             subs.innerText = `"${MEMORIES[id]}"`;
             subs.style.opacity = 1;
-            
-            if (outputGain && audioCtx) {
-                outputGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                outputGain.gain.linearRampToValueAtTime(1.0, audioCtx.currentTime + 3.0);
-            }
 
             setTimeout(() => { subs.style.opacity = 0; }, 3000);
         }
@@ -1079,8 +996,6 @@
                     if (fadeVol <= 0) {
                         clearInterval(audioInterval);
                         if (audioStream) audioStream.pause();
-                    } else if (outputGain && audioCtx) {
-                        outputGain.gain.setValueAtTime(fadeVol, audioCtx.currentTime);
                     } else if (audioStream) {
                         audioStream.volume = fadeVol;
                     }
@@ -1094,7 +1009,6 @@
             }, 8000);
         }
 
-        // --- DEBUG COMPONENT OVERRIDES ---
         function skipToStage(stageNum) {
             if (!isGameRunning) return;
             currentStage = stageNum;
@@ -1116,13 +1030,12 @@
             playStageAudio(stageNum);
         }
 
-        // --- MASTER SYSTEM EVENT TICK LOOP ---
         function animate() {
             requestAnimationFrame(animate);
 
             if (!isGameRunning) return;
 
-            const delta = Math.min(0.1, clock.getDelta()); // Cap delta to prevent clipping during frame freezes
+            const delta = Math.min(0.1, clock.getDelta()); 
             gameTime += delta;
             
             const calculatedStage = Math.min(TOTAL_STAGES, Math.floor(gameTime / STAGE_DURATION) + 1);
@@ -1163,7 +1076,6 @@
 
             updateChunks();
 
-            // Run active animations
             chunks.forEach((chunk) => {
                 chunk.children.forEach((child) => {
                     if (child.userData && child.userData.type === "sliding") {
