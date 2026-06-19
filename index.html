@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Before the World Fades</title>
     <style>
         body, html {
@@ -14,6 +14,7 @@
             background-color: #000;
             font-family: 'Courier New', Courier, monospace;
             user-select: none;
+            touch-action: none;
         }
 
         #canvas-container {
@@ -25,14 +26,13 @@
             z-index: 1;
         }
 
-        /* Retro CRT Scanline & Vignette Overlays */
         #vignette {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.85) 100%);
+            background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.9) 100%);
             pointer-events: none;
             z-index: 2;
         }
@@ -43,14 +43,13 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 4px, 6px 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+            background-size: 100% 4px;
             pointer-events: none;
             z-index: 3;
-            opacity: 0.85;
+            opacity: 0.7;
         }
 
-        /* UI Overlay Screen */
         #ui-container {
             position: absolute;
             top: 0;
@@ -63,26 +62,25 @@
             align-items: center;
             color: #f5f2eb;
             z-index: 10;
-            background-color: rgba(10, 10, 10, 0.95);
-            transition: opacity 1.5s ease;
+            background-color: rgba(10, 10, 10, 0.98);
+            transition: opacity 1s ease;
         }
 
         .screen-content {
             text-align: center;
-            max-width: 600px;
+            max-width: 500px;
             padding: 20px;
         }
 
         h1 {
-            font-size: 2.5rem;
+            font-size: 2rem;
             margin-bottom: 20px;
-            letter-spacing: 5px;
+            letter-spacing: 4px;
             color: #dcd3be;
-            text-shadow: 0 0 10px rgba(220, 211, 190, 0.3);
         }
 
         p {
-            font-size: 1rem;
+            font-size: 0.9rem;
             line-height: 1.6;
             margin-bottom: 30px;
             color: #a39e93;
@@ -93,83 +91,83 @@
             border: 1px solid #dcd3be;
             color: #dcd3be;
             padding: 12px 30px;
-            font-size: 1.1rem;
+            font-size: 1rem;
             cursor: pointer;
             text-transform: uppercase;
             letter-spacing: 2px;
-            transition: all 0.3s ease;
             font-family: inherit;
         }
 
-        .btn:hover {
-            background-color: #dcd3be;
-            color: #0a0a10;
-            box-shadow: 0 0 15px rgba(220, 211, 190, 0.4);
-        }
-
-        /* In-Game HUD */
         #hud {
             position: absolute;
-            bottom: 30px;
-            left: 30px;
+            bottom: 20px;
+            left: 20px;
             color: #a39e93;
             z-index: 5;
             pointer-events: none;
             display: none;
-            opacity: 0.8;
-        }
-
-        .hud-element {
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-            letter-spacing: 1px;
         }
 
         #stage-title {
-            font-size: 1.2rem;
+            font-size: 1rem;
             color: #dcd3be;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+        }
+
+        /* Mobile Joystick Styles */
+        #mobile-joystick {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(220, 211, 190, 0.3);
+            border-radius: 50%;
+            z-index: 15;
+            display: none;
+            touch-action: none;
+        }
+
+        #joystick-knob {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            width: 40px;
+            height: 40px;
+            background: rgba(220, 211, 190, 0.6);
+            border-radius: 50%;
         }
 
         /* Developer Skip Menu */
         #dev-menu {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 15px;
+            right: 15px;
             z-index: 20;
-            background: rgba(20, 20, 20, 0.8);
+            background: rgba(20, 20, 20, 0.9);
             border: 1px solid #3a3835;
-            padding: 10px;
+            padding: 8px;
             border-radius: 4px;
-            display: none;
         }
 
         #dev-menu p {
-            margin: 0 0 10px 0;
-            font-size: 0.75rem;
+            margin: 0 0 5px 0;
+            font-size: 0.65rem;
             color: #8c887f;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
 
         .dev-btn {
             background: #2a2825;
             border: 1px solid #5a5752;
             color: #dcd3be;
-            padding: 4px 8px;
-            font-size: 0.75rem;
+            padding: 4px 6px;
+            font-size: 0.65rem;
             cursor: pointer;
-            margin-right: 4px;
-            margin-bottom: 4px;
+            margin-right: 2px;
             font-family: inherit;
         }
 
-        .dev-btn:hover {
-            background: #dcd3be;
-            color: #000;
-        }
-
-        /* Reticle for interaction */
         #reticle {
             position: absolute;
             top: 50%;
@@ -184,37 +182,37 @@
             display: none;
         }
 
-        /* Flash overlay for memories */
         #flash-overlay {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #fff;
+            background-color: #ffd175;
             opacity: 0;
             pointer-events: none;
             z-index: 15;
-            transition: opacity 0.1s ease-out;
+            transition: opacity 0.15s ease-out;
         }
 
         #subtitles {
             position: absolute;
-            bottom: 10%;
+            bottom: 25%;
             width: 100%;
             text-align: center;
             color: #f5f2eb;
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-style: italic;
             z-index: 10;
             pointer-events: none;
-            text-shadow: 2px 2px 4px #000;
+            text-shadow: 1px 1px 3px #000;
             opacity: 0;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.4s ease;
+            padding: 0 20px;
+            box-sizing: border-box;
         }
     </style>
 
-    <!-- Three.js Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
@@ -226,24 +224,26 @@
     <div id="flash-overlay"></div>
     <div id="subtitles"></div>
 
-    <!-- Main Menu Screen -->
     <div id="ui-container">
         <div class="screen-content" id="start-screen">
             <h1>Before the World Fades</h1>
-            <p>An abstract exploration of memory degradation.<br>Inspired by the compositions of The Caretaker.<br><br>Put on headphones. Walk down the corridors. Seek what remains.</p>
-            <button class="btn" id="start-btn">Enter the Mind</button>
+            <p>An abstract exploration of memory decline.<br><br><strong>Controls:</strong><br>PC: WASD to walk, Mouse to look, Click/E to interact.<br>Mobile: Drag left joystick to walk, drag right side of screen to look.</p>
+            <button class="btn" id="start-btn">Begin</button>
         </div>
     </div>
 
-    <!-- Game HUD -->
     <div id="hud">
         <div id="stage-title">Stage 1: Clear Reverie</div>
-        <div class="hud-element" id="time-display">Time: 00:00</div>
+        <div id="time-display" style="font-size: 0.8rem;">Time: 00:00</div>
     </div>
 
-    <!-- Dev Menu -->
+    <!-- Mobile Virtual Joystick -->
+    <div id="mobile-joystick">
+        <div id="joystick-knob"></div>
+    </div>
+
     <div id="dev-menu">
-        <p>Developer Skip Stage</p>
+        <p>Skip Stage</p>
         <button class="dev-btn" onclick="skipToStage(1)">1</button>
         <button class="dev-btn" onclick="skipToStage(2)">2</button>
         <button class="dev-btn" onclick="skipToStage(3)">3</button>
@@ -253,15 +253,13 @@
     </div>
 
     <script>
-        // --- GAME TIMELINE CONFIGURATION ---
-        const STAGE_DURATION = 300; // Each stage lasts 5 minutes (300 seconds)
+        const STAGE_DURATION = 300; 
         const TOTAL_STAGES = 6;
-        let gameTime = 0; // Current time in seconds
+        let gameTime = 0; 
         let currentStage = 1;
         let isGameRunning = false;
+        let isMobile = false;
 
-        // --- AUDIO SOURCE CONFIGURATION ---
-        // Pointing directly to the uncut .m4a files provided
         const AUDIO_FILES = {
             1: "audio/Its just a burning memory.m4a",
             2: "audio/A losing battle is raging.m4a",
@@ -280,62 +278,60 @@
             6: "Stage 6: Terminal Silence"
         };
 
-        // Memories whispered during focal interactions
         const MEMORIES = [
             "We used to walk along the seaside, holding hands...",
-            "Where did I put my brass keychain?",
+            "Where did I put my keys?",
             "Remember the wedding day, the sun was exceptionally bright.",
             "I can smell the coffee brewing, but the kitchen is empty.",
             "Who was that standing in the doorway? She looked familiar...",
-            "It is cold. I think it is autumn, or perhaps winter."
+            "It is cold. I think it is autumn."
         ];
 
-        // --- CORE GAME VARIABLES ---
         let scene, camera, renderer;
         let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
         let velocity = new THREE.Vector3();
         let direction = new THREE.Vector3();
         let clock = new THREE.Clock();
 
-        // Camera control variables (Pointer Lock fallback implementation)
         let pitch = 0, yaw = 0;
         const mouseSensitivity = 0.002;
         
-        // Non-Euclidean Memory Grid System
         const chunks = new Map();
-        const chunkSize = 15; // Size of each room tile
-        let playerGridPos = { x: 0, z: 0 };
+        const chunkSize = 15; 
+        let playerGridPos = { x: 999, z: 999 }; // force map generation immediately
 
-        // Gravity control
         let currentGravity = new THREE.Vector3(0, -1, 0);
         let targetGravity = new THREE.Vector3(0, -1, 0);
         let targetUp = new THREE.Vector3(0, 1, 0);
         let currentUp = new THREE.Vector3(0, 1, 0);
 
-        // Procedural Textures & Materials Caching
         let materials = {};
         let textures = {};
 
-        // Audio System State
-        let audioCtx, activeAudioElement, activeSourceNode;
+        // Single Stream HTML5 Audio setup (highly optimized fallback)
+        let audioCtx, audioStream, mediaSource;
         let filterNode, delayNode, feedbackGain, outputGain;
 
-        // Scene Entities
-        let playerGroup; // Node holding camera to handle clean rotating gravity coordinate systems
+        let playerGroup; 
         let focalPoints = [];
-        let finalSceneObjects = []; // Holds chair and clock for Stage 6
+        let finalSceneObjects = []; 
 
-        // Initialize Web Audio Context and Dynamic Effects chain
+        // Detect mobile users
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            isMobile = true;
+        }
+
         function initAudio() {
             try {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 
-                // Lowpass filter representing mental muffling/dampening
+                audioStream = new Audio();
+                audioStream.crossOrigin = "anonymous";
+                
                 filterNode = audioCtx.createBiquadFilter();
                 filterNode.type = "lowpass";
-                filterNode.frequency.setValueAtTime(10000, audioCtx.currentTime);
+                filterNode.frequency.setValueAtTime(12000, audioCtx.currentTime);
 
-                // Delay / Echo node representing memory echoes/overlapping loops
                 delayNode = audioCtx.createDelay(5.0);
                 delayNode.delayTime.setValueAtTime(0.0, audioCtx.currentTime);
 
@@ -345,78 +341,45 @@
                 outputGain = audioCtx.createGain();
                 outputGain.gain.setValueAtTime(1.0, audioCtx.currentTime);
 
-                // Connect sound design loop
                 delayNode.connect(feedbackGain);
-                feedbackGain.connect(delayNode); // feedback loop
+                feedbackGain.connect(delayNode); 
+
+                mediaSource = audioCtx.createMediaElementSource(audioStream);
+                mediaSource.connect(filterNode);
+                mediaSource.connect(delayNode);
                 
-                // Main route: Source -> Filter -> Output
-                // Sub-route: Source -> Delay -> Output
+                filterNode.connect(outputGain);
+                delayNode.connect(outputGain);
+                outputGain.connect(audioCtx.destination);
             } catch(e) {
-                console.warn("Web Audio API not supported", e);
+                console.warn("AudioContext setup failed, falling back to standard audio stream.", e);
+                // Setup direct standard HTML5 fallback
+                audioStream = new Audio();
+                audioStream.crossOrigin = "anonymous";
             }
         }
 
-        // Start playing the designated stage track with corresponding parameters
         function playStageAudio(stageNum) {
-            if (!audioCtx) return;
+            if (!audioStream) return;
 
-            // Fade out and terminate existing audio safely
-            if (activeAudioElement) {
-                const prevElement = activeAudioElement;
-                const prevGain = outputGain;
-                // Soft fade transition
-                let fadeVol = 1.0;
-                let fadeInterval = setInterval(() => {
-                    fadeVol -= 0.1;
-                    if (fadeVol <= 0) {
-                        clearInterval(fadeInterval);
-                        prevElement.pause();
-                        prevElement.src = "";
-                    } else {
-                        prevElement.volume = fadeVol;
-                    }
-                }, 100);
-            }
+            audioStream.pause();
+            audioStream.src = AUDIO_FILES[stageNum];
+            audioStream.loop = stageNum !== 6;
 
-            // Create new streaming HTML5 audio context to prevent system overhead
-            const audio = new Audio();
-            audio.src = AUDIO_FILES[stageNum];
-            audio.crossOrigin = "anonymous";
-            audio.loop = stageNum !== 6; // Stage 6 manages its own termination
-            activeAudioElement = audio;
-
-            // Set up Web Audio connections
-            if (activeSourceNode) {
-                activeSourceNode.disconnect();
-            }
-            activeSourceNode = audioCtx.createMediaElementSource(audio);
-            
-            // Reconnect Web Audio routing graph
-            activeSourceNode.connect(filterNode);
-            activeSourceNode.connect(delayNode);
-            
-            filterNode.connect(outputGain);
-            delayNode.connect(outputGain);
-            outputGain.connect(audioCtx.destination);
-
-            // Manage time jumps for uncut tracks
+            // Handle uncut timestamps
             if (stageNum === 6) {
-                // Jump to the 13-minute mark (780s) to catch drone transition and 15:30 choir [1]
-                audio.addEventListener('loadedmetadata', () => {
-                    audio.currentTime = 780;
+                audioStream.addEventListener('loadedmetadata', function onMetadata() {
+                    audioStream.currentTime = 780; // Seek to 13:00 to hear drone transition [1]
+                    audioStream.removeEventListener('loadedmetadata', onMetadata);
                 });
             } else {
-                audio.currentTime = 0;
+                audioStream.currentTime = 0;
             }
 
-            // Update effect chain properties on runtime based on stage decay
             applyAudioDecay(stageNum);
-
-            // Attempt playback inside user click thread
-            audio.play().catch(e => console.warn("Audio playback blocked", e));
+            audioStream.play().catch(e => console.warn("Playback blocked or loading", e));
         }
 
-        // Apply audio deterioration metrics per stage
         function applyAudioDecay(stageNum) {
             if (!audioCtx) return;
             const t = audioCtx.currentTime;
@@ -428,142 +391,119 @@
                     feedbackGain.gain.linearRampToValueAtTime(0.0, t + 2);
                     break;
                 case 2:
-                    filterNode.frequency.linearRampToValueAtTime(4000, t + 5);
-                    delayNode.delayTime.linearRampToValueAtTime(0.3, t + 5);
-                    feedbackGain.gain.linearRampToValueAtTime(0.2, t + 5);
+                    filterNode.frequency.linearRampToValueAtTime(3000, t + 5);
+                    delayNode.delayTime.linearRampToValueAtTime(0.2, t + 5);
+                    feedbackGain.gain.linearRampToValueAtTime(0.15, t + 5);
                     break;
                 case 3:
-                    // Intense pitch wavering can be simulated with rapid LFO,
-                    // here we heavily clamp high frequencies and introduce a heavy metallic echo
-                    filterNode.frequency.linearRampToValueAtTime(1200, t + 5);
-                    delayNode.delayTime.linearRampToValueAtTime(0.5, t + 5);
-                    feedbackGain.gain.linearRampToValueAtTime(0.4, t + 5);
+                    filterNode.frequency.linearRampToValueAtTime(1000, t + 5);
+                    delayNode.delayTime.linearRampToValueAtTime(0.4, t + 5);
+                    feedbackGain.gain.linearRampToValueAtTime(0.3, t + 5);
                     break;
                 case 4:
-                    // Drifting static and distant echoes
-                    filterNode.frequency.linearRampToValueAtTime(800, t + 5);
-                    delayNode.delayTime.linearRampToValueAtTime(1.2, t + 5);
-                    feedbackGain.gain.linearRampToValueAtTime(0.5, t + 5);
+                    filterNode.frequency.linearRampToValueAtTime(700, t + 5);
+                    delayNode.delayTime.linearRampToValueAtTime(0.9, t + 5);
+                    feedbackGain.gain.linearRampToValueAtTime(0.4, t + 5);
                     break;
                 case 5:
-                    // Heavily distorted, drowned out low-frequency rumble
-                    filterNode.frequency.linearRampToValueAtTime(350, t + 5);
-                    delayNode.delayTime.linearRampToValueAtTime(2.0, t + 5);
-                    feedbackGain.gain.linearRampToValueAtTime(0.65, t + 5);
+                    filterNode.frequency.linearRampToValueAtTime(300, t + 5);
+                    delayNode.delayTime.linearRampToValueAtTime(1.5, t + 5);
+                    feedbackGain.gain.linearRampToValueAtTime(0.5, t + 5);
                     break;
                 case 6:
-                    // Beautiful organ sequence will clear out of filters once hit
-                    // We start muffled during drone, then expand during the choir climax
-                    filterNode.frequency.linearRampToValueAtTime(600, t + 5);
-                    delayNode.delayTime.linearRampToValueAtTime(1.5, t + 5);
-                    feedbackGain.gain.linearRampToValueAtTime(0.3, t + 5);
+                    filterNode.frequency.linearRampToValueAtTime(800, t + 5);
+                    delayNode.delayTime.linearRampToValueAtTime(1.0, t + 5);
+                    feedbackGain.gain.linearRampToValueAtTime(0.2, t + 5);
                     break;
             }
         }
 
-        // Procedural Textures Generation via HTML5 Canvas
         function createProceduralTextures() {
-            // Helper canvas
             const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
+            canvas.width = 128;
+            canvas.height = 128;
             const ctx = canvas.getContext('2d');
 
-            // 1. Carpet Texture
+            // 1. Carpet
             ctx.fillStyle = '#dbcca9';
-            ctx.fillRect(0,0,256,256);
-            for(let i=0; i<30000; i++) {
-                let size = Math.random() * 1.5;
-                let opacity = Math.random() * 0.15;
-                ctx.fillStyle = Math.random() > 0.5 ? `rgba(255,255,255,${opacity})` : `rgba(80,60,30,${opacity})`;
-                ctx.fillRect(Math.random()*256, Math.random()*256, size, size);
+            ctx.fillRect(0,0,128,128);
+            for(let i=0; i<5000; i++) {
+                ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.1)' : 'rgba(80,60,30,0.1)';
+                ctx.fillRect(Math.random()*128, Math.random()*128, 2, 2);
             }
             textures.carpet = new THREE.CanvasTexture(canvas);
             textures.carpet.wrapS = THREE.RepeatWrapping;
             textures.carpet.wrapT = THREE.RepeatWrapping;
 
-            // 2. Wallpaper Texture (Cream Yellow with Vintage Floral Stripes)
-            ctx.fillStyle = '#f4ecd8';
-            ctx.fillRect(0,0,256,256);
-            ctx.fillStyle = '#e8dcb9';
-            // Vertical stripes
-            for(let i=0; i<256; i+=32) {
-                ctx.fillRect(i, 0, 8, 256);
+            // 2. Wallpaper
+            const canvasWP = document.createElement('canvas');
+            canvasWP.width = 128;
+            canvasWP.height = 128;
+            const ctxWP = canvasWP.getContext('2d');
+            ctxWP.fillStyle = '#f4ecd8';
+            ctxWP.fillRect(0,0,128,128);
+            ctxWP.fillStyle = '#e8dcb9';
+            for(let i=0; i<128; i+=32) {
+                ctxWP.fillRect(i, 0, 4, 128);
             }
-            // Small tiny flower shapes
-            ctx.fillStyle = '#c7b383';
-            for(let x=16; x<256; x+=32) {
-                for(let y=16; y<256; y+=32) {
-                    ctx.beginPath();
-                    ctx.arc(x, y, 2, 0, Math.PI*2);
-                    ctx.fill();
-                    // petals
-                    ctx.fillRect(x-4, y-1, 8, 2);
-                    ctx.fillRect(x-1, y-4, 2, 8);
-                }
-            }
-            textures.wallpaper = new THREE.CanvasTexture(canvas);
+            textures.wallpaper = new THREE.CanvasTexture(canvasWP);
             textures.wallpaper.wrapS = THREE.RepeatWrapping;
             textures.wallpaper.wrapT = THREE.RepeatWrapping;
 
-            // 3. Concrete Texture (Stage 3 & 4 Decay)
-            const canvasConcrete = document.createElement('canvas');
-            canvasConcrete.width = 256;
-            canvasConcrete.height = 256;
-            const ctxC = canvasConcrete.getContext('2d');
+            // 3. Concrete
+            const canvasC = document.createElement('canvas');
+            canvasC.width = 128;
+            canvasC.height = 128;
+            const ctxC = canvasC.getContext('2d');
             ctxC.fillStyle = '#5c5a56';
-            ctxC.fillRect(0,0,256,256);
-            for(let i=0; i<40000; i++) {
-                let size = Math.random() * 2;
-                let opacity = Math.random() * 0.25;
-                ctxC.fillStyle = Math.random() > 0.5 ? `rgba(255,255,255,${opacity})` : `rgba(0,0,0,${opacity})`;
-                ctxC.fillRect(Math.random()*256, Math.random()*256, size, size);
+            ctxC.fillRect(0,0,128,128);
+            for(let i=0; i<6000; i++) {
+                ctxC.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)';
+                ctxC.fillRect(Math.random()*128, Math.random()*128, 2, 2);
             }
-            textures.concrete = new THREE.CanvasTexture(canvasConcrete);
+            textures.concrete = new THREE.CanvasTexture(canvasC);
             textures.concrete.wrapS = THREE.RepeatWrapping;
             textures.concrete.wrapT = THREE.RepeatWrapping;
         }
 
-        // Set up WebGL renderer, camera node rigs, and atmospheric lighting
         function initScene() {
             const container = document.getElementById('canvas-container');
 
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0a0a0a);
-            scene.fog = new THREE.FogExp2(0x0a0a0a, 0.05);
+            scene.background = new THREE.Color(0x050505);
+            scene.fog = new THREE.FogExp2(0x050505, 0.04);
 
-            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 80);
             
-            // Create camera rig holding the dynamic gravity alignment
             playerGroup = new THREE.Group();
             playerGroup.position.set(0, 1.8, 0);
             playerGroup.add(camera);
             scene.add(playerGroup);
 
-            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.0;
+            // Disabled heavy renderer shadows completely to fix hardware crashing
+            renderer.shadowMap.enabled = false; 
             container.appendChild(renderer.domElement);
 
             createProceduralTextures();
 
-            // Setup Materials
-            materials.carpet = new THREE.MeshStandardMaterial({ map: textures.carpet, roughness: 0.9, bumpMap: textures.carpet, bumpScale: 0.02 });
-            materials.wallpaper = new THREE.MeshStandardMaterial({ map: textures.wallpaper, roughness: 0.7, bumpMap: textures.wallpaper, bumpScale: 0.01 });
-            materials.concrete = new THREE.MeshStandardMaterial({ map: textures.concrete, roughness: 0.85, bumpMap: textures.concrete, bumpScale: 0.04 });
-            materials.black = new THREE.MeshBasicMaterial({ color: 0x000000 });
-            materials.wood = new THREE.MeshStandardMaterial({ color: 0x2a1a0c, roughness: 0.6 });
-            materials.brass = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.8, roughness: 0.2 });
+            // Mobile-friendly, high performance materials
+            materials.carpet = new THREE.MeshPhongMaterial({ map: textures.carpet, shininess: 2 });
+            materials.wallpaper = new THREE.MeshPhongMaterial({ map: textures.wallpaper, shininess: 5 });
+            materials.concrete = new THREE.MeshPhongMaterial({ map: textures.concrete, shininess: 2 });
+            materials.wood = new THREE.MeshPhongMaterial({ color: 0x24160a, shininess: 10 });
+            materials.brass = new THREE.MeshPhongMaterial({ color: 0xbfa15f, shininess: 80 });
 
-            // Ambient fill
-            const ambientLight = new THREE.AmbientLight(0x1a1a1a);
+            // Generous ambient lighting to prevent absolute black screens
+            const ambientLight = new THREE.AmbientLight(0x404040);
             scene.add(ambientLight);
 
-            // Re-render handler
             window.addEventListener('resize', onWindowResize, false);
+
+            if (isMobile) {
+                initMobileControls();
+            }
         }
 
         function onWindowResize() {
@@ -572,18 +512,33 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // --- CAMERA CONTROLLER (POINTER LOCK IMPLEMENTATION) ---
+        // --- POINTER LOCK & MOBILE TRIGGER HANDLERS ---
         const startBtn = document.getElementById('start-btn');
         const uiContainer = document.getElementById('ui-container');
 
         startBtn.addEventListener('click', () => {
-            document.body.requestPointerLock();
+            if (isMobile) {
+                uiContainer.style.opacity = 0;
+                setTimeout(() => { uiContainer.style.display = 'none'; }, 1000);
+                document.getElementById('hud').style.display = 'block';
+                document.getElementById('mobile-joystick').style.display = 'block';
+                document.getElementById('dev-menu').style.display = 'block';
+                
+                if (!isGameRunning) {
+                    isGameRunning = true;
+                    initAudio();
+                    playStageAudio(1);
+                    clock.getDelta();
+                }
+            } else {
+                document.body.requestPointerLock();
+            }
         });
 
         document.addEventListener('pointerlockchange', () => {
             if (document.pointerLockElement === document.body) {
                 uiContainer.style.opacity = 0;
-                setTimeout(() => { uiContainer.style.display = 'none'; }, 1500);
+                setTimeout(() => { uiContainer.style.display = 'none'; }, 1000);
                 document.getElementById('hud').style.display = 'block';
                 document.getElementById('reticle').style.display = 'block';
                 document.getElementById('dev-menu').style.display = 'block';
@@ -592,7 +547,7 @@
                     isGameRunning = true;
                     initAudio();
                     playStageAudio(1);
-                    clock.getDelta(); // reset clock delta
+                    clock.getDelta();
                 } else if (audioCtx && audioCtx.state === 'suspended') {
                     audioCtx.resume();
                 }
@@ -602,76 +557,141 @@
             }
         });
 
+        // PC Looking rotation
         document.addEventListener('mousemove', (e) => {
-            if (document.pointerLockElement !== document.body) return;
+            if (document.pointerLockElement !== document.body || isMobile) return;
 
             yaw -= e.movementX * mouseSensitivity;
             pitch -= e.movementY * mouseSensitivity;
-
-            // Clamp vertical rotation
             pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, pitch));
-
-            // Apply rotations relative to active gravity state matrix
             camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
         });
 
-        // Input monitoring
+        // --- MOBILE INPUT LOGIC (JOYSTICK + SWIPE TO LOOK) ---
+        let touchStartX = 0, touchStartY = 0;
+        let isLooking = false;
+        let activeLookId = null;
+
+        function initMobileControls() {
+            const joystick = document.getElementById('mobile-joystick');
+            const knob = document.getElementById('joystick-knob');
+            const joyMaxRadius = 60;
+
+            // Movement Touch Handler
+            joystick.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = joystick.getBoundingClientRect();
+                touchStartX = touch.clientX - rect.left - 60;
+                touchStartY = touch.clientY - rect.top - 60;
+            }, { passive: false });
+
+            joystick.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const rect = joystick.getBoundingClientRect();
+                let x = touch.clientX - rect.left - 60 - touchStartX;
+                let y = touch.clientY - rect.top - 60 - touchStartY;
+
+                let dist = Math.sqrt(x*x + y*y);
+                if (dist > joyMaxRadius) {
+                    x = (x / dist) * joyMaxRadius;
+                    y = (y / dist) * joyMaxRadius;
+                    dist = joyMaxRadius;
+                }
+
+                knob.style.transform = `translate(${x}px, ${y}px)`;
+
+                // Map joystick layout coordinates straight to locomotion velocity vectors
+                const nX = x / joyMaxRadius;
+                const nY = y / joyMaxRadius;
+
+                moveForward = nY < -0.2;
+                moveBackward = nY > 0.2;
+                moveLeft = nX < -0.2;
+                moveRight = nX > 0.2;
+            }, { passive: false });
+
+            joystick.addEventListener('touchend', (e) => {
+                knob.style.transform = 'translate(0px, 0px)';
+                moveForward = moveBackward = moveLeft = moveRight = false;
+            });
+
+            // Swipe to Look (Right half of mobile screen)
+            window.addEventListener('touchstart', (e) => {
+                for (let i = 0; i < e.touches.length; i++) {
+                    const t = e.touches[i];
+                    if (t.clientX > window.innerWidth / 2) {
+                        isLooking = true;
+                        activeLookId = t.identifier;
+                        touchStartX = t.clientX;
+                        touchStartY = t.clientY;
+                        break;
+                    }
+                }
+            });
+
+            window.addEventListener('touchmove', (e) => {
+                if (!isLooking) return;
+                for (let i = 0; i < e.touches.length; i++) {
+                    const t = e.touches[i];
+                    if (t.identifier === activeLookId) {
+                        let dx = t.clientX - touchStartX;
+                        let dy = t.clientY - touchStartY;
+
+                        yaw -= dx * 0.005;
+                        pitch -= dy * 0.005;
+                        pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, pitch));
+                        camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
+
+                        touchStartX = t.clientX;
+                        touchStartY = t.clientY;
+                        break;
+                    }
+                }
+            }, { passive: false });
+
+            window.addEventListener('touchend', (e) => {
+                let stillLooking = false;
+                for (let i = 0; i < e.touches.length; i++) {
+                    if (e.touches[i].identifier === activeLookId) {
+                        stillLooking = true;
+                        break;
+                    }
+                }
+                if (!stillLooking) {
+                    isLooking = false;
+                    activeLookId = null;
+                }
+            });
+        }
+
+        // --- KEYBOARD CONTROLS (PC ONLY) ---
         const onKeyDown = function (event) {
+            if (isMobile) return;
             switch (event.code) {
-                case 'ArrowUp':
-                case 'KeyW':
-                    moveForward = true;
-                    break;
-                case 'ArrowLeft':
-                case 'KeyA':
-                    moveLeft = true;
-                    break;
-                case 'ArrowDown':
-                case 'KeyS':
-                    moveBackward = true;
-                    break;
-                case 'ArrowRight':
-                case 'KeyD':
-                    moveRight = true;
-                    break;
-                case 'KeyE':
-                    triggerInteraction();
-                    break;
+                case 'KeyW': moveForward = true; break;
+                case 'KeyA': moveLeft = true; break;
+                case 'KeyS': moveBackward = true; break;
+                case 'KeyD': moveRight = true; break;
+                case 'KeyE': triggerInteraction(); break;
             }
         };
 
         const onKeyUp = function (event) {
+            if (isMobile) return;
             switch (event.code) {
-                case 'ArrowUp':
-                case 'KeyW':
-                    moveForward = false;
-                    break;
-                case 'ArrowLeft':
-                case 'KeyA':
-                    moveLeft = false;
-                    break;
-                case 'ArrowDown':
-                case 'KeyS':
-                    moveBackward = false;
-                    break;
-                case 'ArrowRight':
-                case 'KeyD':
-                    moveRight = false;
-                    break;
+                case 'KeyW': moveForward = false; break;
+                case 'KeyA': moveLeft = false; break;
+                case 'KeyS': moveBackward = false; break;
+                case 'KeyD': moveRight = false; break;
             }
         };
 
         document.addEventListener('keydown', onKeyDown);
         document.addEventListener('keyup', onKeyUp);
-        document.addEventListener('click', () => {
-            if (document.pointerLockElement === document.body) {
-                triggerInteraction();
-            }
-        });
 
-        // --- NON-EUCLIDEAN DYNAMIC MEMORY GRID GENERATION ---
-        
-        // Spawn chunks procedurally on grid coordinates
+        // --- PROCEDURAL ARCHITECTURE SPINNER ---
         function getChunkKey(x, z) {
             return `${x},${z}`;
         }
@@ -681,30 +701,23 @@
             sconceGroup.position.set(x, y, z);
             sconceGroup.rotation.y = rotationY;
 
-            // Brass fixture arm
-            const armGeom = new THREE.CylinderGeometry(0.02, 0.02, 0.3);
+            const armGeom = new THREE.CylinderGeometry(0.015, 0.015, 0.2);
             const arm = new THREE.Mesh(armGeom, materials.brass);
             arm.rotation.x = Math.PI / 2;
             sconceGroup.add(arm);
 
-            // Small light bulb
-            const bulbGeom = new THREE.SphereGeometry(0.08, 8, 8);
-            const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffe59c });
+            const bulbGeom = new THREE.SphereGeometry(0.06, 6, 6);
+            const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffeaad });
             const bulb = new THREE.Mesh(bulbGeom, bulbMat);
-            bulb.position.set(0, 0, 0.15);
+            bulb.position.set(0, 0, 0.1);
             sconceGroup.add(bulb);
 
-            // Light object casting shadows based on active stage
             const lightColor = currentStage >= 3 ? 0xccffea : 0xffe6a3;
-            const lightIntensity = currentStage === 4 ? 0.3 : (currentStage === 5 ? 0.1 : 0.95);
+            const lightIntensity = currentStage === 4 ? 0.3 : (currentStage === 5 ? 0.15 : 0.8);
             const light = new THREE.PointLight(lightColor, lightIntensity, 8);
-            light.position.set(0, 0, 0.2);
-            light.castShadow = currentStage < 4; // Turn off shadow mapping in post-awareness stages for memory optimization
-            light.shadow.mapSize.width = 512;
-            light.shadow.mapSize.height = 512;
+            light.position.set(0, 0, 0.12);
             sconceGroup.add(light);
 
-            // Add to chunk container
             group.add(sconceGroup);
         }
 
@@ -712,7 +725,6 @@
             const group = new THREE.Group();
             group.position.set(gx * chunkSize, 0, gz * chunkSize);
 
-            // Determine rendering style per stage configuration
             let floorMat = materials.carpet;
             let wallMat = materials.wallpaper;
 
@@ -723,98 +735,86 @@
                 floorMat = materials.concrete;
             }
 
-            // Standard Corridor Segment
-            // Floor
+            // Standard Floor
             if (currentStage < 4) {
                 const floorGeom = new THREE.PlaneGeometry(chunkSize, chunkSize);
                 const floor = new THREE.Mesh(floorGeom, floorMat);
                 floor.rotation.x = -Math.PI / 2;
-                floor.receiveShadow = true;
                 group.add(floor);
             } else {
-                // Fragmented floating platforms representing Stage 4 & 5 post-awareness degradation
-                for(let i = 0; i < 4; i++) {
-                    const blockGeom = new THREE.BoxGeometry(3 + Math.random()*4, 0.4, 3 + Math.random()*4);
+                // Fragmented floating panels
+                for(let i = 0; i < 3; i++) {
+                    const blockGeom = new THREE.BoxGeometry(4 + Math.random()*3, 0.3, 4 + Math.random()*3);
                     const block = new THREE.Mesh(blockGeom, floorMat);
                     block.position.set(
-                        (Math.random() - 0.5) * 8,
-                        (Math.random() - 0.5) * 2 - 0.5,
-                        (Math.random() - 0.5) * 8
+                        (Math.random() - 0.5) * 6,
+                        (Math.random() - 0.5) * 1.5 - 0.3,
+                        (Math.random() - 0.5) * 6
                     );
                     block.rotation.y = Math.random() * Math.PI;
                     group.add(block);
                 }
             }
 
-            // Ceiling (Dissolves in Stage 4 & 5)
+            // Ceiling
             if (currentStage < 4) {
                 const ceilingGeom = new THREE.PlaneGeometry(chunkSize, chunkSize);
-                const ceiling = new THREE.Mesh(ceilingGeom, floorMat); // Using same texture map to represent continuous enclosures
+                const ceiling = new THREE.Mesh(ceilingGeom, floorMat); 
                 ceiling.rotation.x = Math.PI / 2;
                 ceiling.position.y = 3.5;
                 group.add(ceiling);
             }
 
-            // Walls (Left and Right)
+            // Walls (Left & Right)
             if (currentStage < 4) {
                 const wallGeom = new THREE.PlaneGeometry(chunkSize, 3.5);
                 
-                // Left Wall
                 const wallLeft = new THREE.Mesh(wallGeom, wallMat);
                 wallLeft.position.set(-chunkSize/2, 1.75, 0);
                 wallLeft.rotation.y = Math.PI / 2;
-                wallLeft.receiveShadow = true;
-                wallLeft.castShadow = true;
                 group.add(wallLeft);
 
-                // Right Wall
                 const wallRight = new THREE.Mesh(wallGeom, wallMat);
                 wallRight.position.set(chunkSize/2, 1.75, 0);
                 wallRight.rotation.y = -Math.PI / 2;
-                wallRight.receiveShadow = true;
-                wallRight.castShadow = true;
                 group.add(wallRight);
 
-                // Wall lighting
-                createWallSconce(group, -chunkSize/2 + 0.1, 2.2, 0, Math.PI/2);
-                createWallSconce(group, chunkSize/2 - 0.1, 2.2, 0, -Math.PI/2);
+                createWallSconce(group, -chunkSize/2 + 0.05, 2.2, 0, Math.PI/2);
+                createWallSconce(group, chunkSize/2 - 0.05, 2.2, 0, -Math.PI/2);
             } else if (currentStage === 5) {
-                // Stage 5 Monolithic massive structures drifting
-                const colGeom = new THREE.BoxGeometry(10, 80, 10);
+                // Massive blocks
+                const colGeom = new THREE.BoxGeometry(10, 60, 10);
                 const col = new THREE.Mesh(colGeom, materials.concrete);
-                col.position.set((Math.random() - 0.5) * 30, -30, (Math.random() - 0.5) * 30);
-                col.rotation.set(Math.random()*0.3, Math.random()*3, Math.random()*0.3);
+                col.position.set((Math.random() - 0.5) * 20, -25, (Math.random() - 0.5) * 20);
+                col.rotation.set(Math.random()*0.2, Math.random()*3, Math.random()*0.2);
                 group.add(col);
             }
 
-            // Interactive memory objects (Focal points)
-            // Spawn with probability
-            if (currentStage < 4 && Math.random() > 0.65) {
+            // Interactive memory artifacts
+            if (currentStage < 4 && Math.random() > 0.6) {
                 spawnFocalPoint(group, gx, gz);
             }
 
-            // Stage 3 kinetic sliding walls (Tectonic movements)
+            // Stage 3 kinetic sliding walls
             if (currentStage === 3) {
-                const slideGeom = new THREE.BoxGeometry(0.5, 3.5, 6);
+                const slideGeom = new THREE.BoxGeometry(0.4, 3.5, 5);
                 const slideWall = new THREE.Mesh(slideGeom, materials.concrete);
-                slideWall.position.set(0, 1.75, (Math.random() - 0.5) * 4);
-                slideWall.castShadow = true;
-                // Hook update function
+                slideWall.position.set(0, 1.75, (Math.random() - 0.5) * 3);
                 slideWall.userData = {
                     type: "sliding",
-                    speed: 0.5 + Math.random() * 0.8,
-                    range: 3.5,
+                    speed: 0.6 + Math.random() * 0.6,
+                    range: 3.0,
                     baseX: 0
                 };
                 group.add(slideWall);
             }
 
-            // Stage 2/3 Colored Gravity Shifting Plates
+            // Stage 2/3 Gravity flipping zones
             if (currentStage === 2 || currentStage === 3) {
-                const padGeom = new THREE.BoxGeometry(2, 0.05, 2);
-                const padMat = new THREE.MeshBasicMaterial({ color: 0x3d705d, transparent: true, opacity: 0.5 });
+                const padGeom = new THREE.BoxGeometry(1.8, 0.05, 1.8);
+                const padMat = new THREE.MeshBasicMaterial({ color: 0x3d705d, transparent: true, opacity: 0.6 });
                 const pad = new THREE.Mesh(padGeom, padMat);
-                pad.position.set((Math.random()-0.5)*4, 0.03, (Math.random()-0.5)*4);
+                pad.position.set((Math.random()-0.5)*3, 0.02, (Math.random()-0.5)*3);
                 pad.userData = {
                     type: "gravityPad",
                     dir: new THREE.Vector3(
@@ -830,32 +830,29 @@
             chunks.set(getChunkKey(gx, gz), group);
         }
 
-        // Spawn interactive memory points
         function spawnFocalPoint(group, gx, gz) {
-            // Create a small wooden pedestal table
             const tableGroup = new THREE.Group();
-            tableGroup.position.set((Math.random() - 0.5) * 4, 0, (Math.random() - 0.5) * 4);
+            tableGroup.position.set((Math.random() - 0.5) * 3, 0, (Math.random() - 0.5) * 3);
 
-            const baseGeom = new THREE.CylinderGeometry(0.3, 0.3, 0.05);
+            const baseGeom = new THREE.CylinderGeometry(0.25, 0.25, 0.05, 8);
             const base = new THREE.Mesh(baseGeom, materials.wood);
             base.position.y = 0.025;
             tableGroup.add(base);
 
-            const legGeom = new THREE.CylinderGeometry(0.04, 0.04, 0.9);
+            const legGeom = new THREE.CylinderGeometry(0.03, 0.03, 0.9, 6);
             const leg = new THREE.Mesh(legGeom, materials.wood);
             leg.position.y = 0.5;
             tableGroup.add(leg);
 
-            const topGeom = new THREE.CylinderGeometry(0.45, 0.45, 0.05);
+            const topGeom = new THREE.CylinderGeometry(0.35, 0.35, 0.05, 8);
             const top = new THREE.Mesh(topGeom, materials.wood);
             top.position.y = 0.95;
             tableGroup.add(top);
 
-            // Memory glowing artifact
-            const itemGeom = new THREE.DodecahedronGeometry(0.1);
+            const itemGeom = new THREE.DodecahedronGeometry(0.08);
             const itemMat = new THREE.MeshBasicMaterial({ color: 0xffd175, wireframe: true });
             const item = new THREE.Mesh(itemGeom, itemMat);
-            item.position.y = 1.15;
+            item.position.y = 1.1;
             item.userData = {
                 type: "artifact",
                 id: Math.floor(Math.random() * MEMORIES.length),
@@ -864,14 +861,11 @@
             tableGroup.add(item);
             
             focalPoints.push(item);
-
             group.add(tableGroup);
         }
 
-        // Keep track of grid updates based on player spatial location
         function updateChunks() {
             if (currentStage === 6) {
-                // Instantly remove structural generation segments for Stage 6 void
                 clearAllChunks();
                 return;
             }
@@ -886,7 +880,6 @@
                 playerGridPos.x = cx;
                 playerGridPos.y = cz;
 
-                // Non-Euclidean Memory Buffer generation range
                 const range = 2; 
                 const keepSet = new Set();
 
@@ -900,22 +893,17 @@
                     }
                 }
 
-                // Delete remote chunks behind the player view-cone to enforce spatial decay
+                // Discard distant chunks out of the view frustum to clear frame latency
                 for (const [key, obj] of chunks.entries()) {
                     if (!keepSet.has(key)) {
-                        // Check dot product to see if chunk is out of view before sweeping
                         const chunkPos = obj.position.clone();
                         const toChunk = chunkPos.sub(playerGroup.position);
                         const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
                         const dot = toChunk.normalize().dot(forward);
 
-                        // If behind player view-cone or very far, destroy it
-                        if (dot < 0.2 || toChunk.length() > 40) {
+                        if (dot < 0.2 || toChunk.length() > 35) {
                             scene.remove(obj);
-                            
-                            // Clear stored artifacts
                             focalPoints = focalPoints.filter(fp => fp.userData.parentChunk !== key);
-                            
                             chunks.delete(key);
                         }
                     }
@@ -931,114 +919,103 @@
             focalPoints = [];
         }
 
-        // Stage 6 Specific Scene Setup
+        // --- STAGE 6 ENVIRONMENT SETUP ---
         function initStage6Environment() {
             clearAllChunks();
             scene.fog.color.setHex(0x020202);
-            scene.fog.density = 0.02;
+            scene.fog.density = 0.03;
 
-            // Simple floor grid to provide spatial relativity
-            const floorGeom = new THREE.PlaneGeometry(100, 100);
-            const floorMat = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 1.0 });
+            const floorGeom = new THREE.PlaneGeometry(80, 80);
+            const floorMat = new THREE.MeshPhongMaterial({ color: 0x050505, shininess: 0 });
             const floor = new THREE.Mesh(floorGeom, floorMat);
             floor.rotation.x = -Math.PI/2;
             scene.add(floor);
             finalSceneObjects.push(floor);
 
-            // Procedurally modeled single wooden armchair in the void
+            // Armchair Setup
             const chairGroup = new THREE.Group();
             chairGroup.position.set(0, 0, -6);
 
-            // Legs
-            const legG = new THREE.CylinderGeometry(0.04, 0.04, 0.6);
-            for(let x = -0.4; x <= 0.4; x += 0.8) {
-                for(let z = -0.4; z <= 0.4; z += 0.8) {
+            const legG = new THREE.CylinderGeometry(0.03, 0.03, 0.55, 6);
+            for(let x = -0.35; x <= 0.35; x += 0.7) {
+                for(let z = -0.35; z <= 0.35; z += 0.7) {
                     const leg = new THREE.Mesh(legG, materials.wood);
-                    leg.position.set(x, 0.3, z);
+                    leg.position.set(x, 0.275, z);
                     chairGroup.add(leg);
                 }
             }
 
-            // Cushion seat
-            const seatG = new THREE.BoxGeometry(1.0, 0.15, 1.0);
-            const cushionMat = new THREE.MeshStandardMaterial({ color: 0x5a1a1a, roughness: 0.8 });
+            const seatG = new THREE.BoxGeometry(0.9, 0.15, 0.9);
+            const cushionMat = new THREE.MeshPhongMaterial({ color: 0x471515, shininess: 1 });
             const seat = new THREE.Mesh(seatG, cushionMat);
-            seat.position.y = 0.65;
+            seat.position.y = 0.6;
             chairGroup.add(seat);
 
-            // Chair backrest
-            const backG = new THREE.BoxGeometry(1.0, 1.0, 0.15);
+            const backG = new THREE.BoxGeometry(0.9, 0.9, 0.15);
             const back = new THREE.Mesh(backG, cushionMat);
-            back.position.set(0, 1.15, -0.425);
+            back.position.set(0, 1.05, -0.375);
             chairGroup.add(back);
 
-            // Armrests
-            const armG = new THREE.BoxGeometry(0.15, 0.15, 1.0);
+            const armG = new THREE.BoxGeometry(0.12, 0.12, 0.9);
             const leftArm = new THREE.Mesh(armG, materials.wood);
-            leftArm.position.set(-0.48, 0.8, 0);
+            leftArm.position.set(-0.42, 0.7, 0);
             const rightArm = new THREE.Mesh(armG, materials.wood);
-            rightArm.position.set(0.48, 0.8, 0);
+            rightArm.position.set(0.42, 0.7, 0);
             chairGroup.add(leftArm);
             chairGroup.add(rightArm);
 
             scene.add(chairGroup);
             finalSceneObjects.push(chairGroup);
 
-            // Grandfather clock
+            // Grandfather clock representation (with blank face)
             const clockGroup = new THREE.Group();
-            clockGroup.position.set(3, 0, -6);
+            clockGroup.position.set(2.5, 0, -5.5);
             clockGroup.rotation.y = -Math.PI / 4;
 
-            // Clock frame body
-            const baseG = new THREE.BoxGeometry(1.0, 0.4, 0.8);
+            const baseG = new THREE.BoxGeometry(0.8, 0.3, 0.6);
             const base = new THREE.Mesh(baseG, materials.wood);
-            base.position.y = 0.2;
+            base.position.y = 0.15;
             clockGroup.add(base);
 
-            const midG = new THREE.BoxGeometry(0.8, 1.8, 0.6);
+            const midG = new THREE.BoxGeometry(0.65, 1.6, 0.5);
             const mid = new THREE.Mesh(midG, materials.wood);
-            mid.position.y = 1.3;
+            mid.position.y = 1.1;
             clockGroup.add(mid);
 
-            const headG = new THREE.BoxGeometry(1.0, 0.8, 0.8);
+            const headG = new THREE.BoxGeometry(0.8, 0.7, 0.6);
             const head = new THREE.Mesh(headG, materials.wood);
-            head.position.y = 2.6;
+            head.position.y = 2.25;
             clockGroup.add(head);
 
-            // Handless clock face representation
-            const faceG = new THREE.CircleGeometry(0.3, 32);
-            const faceMat = new THREE.MeshBasicMaterial({ color: 0xe8e5d8 });
+            const faceG = new THREE.CircleGeometry(0.22, 16);
+            const faceMat = new THREE.MeshBasicMaterial({ color: 0xdedac8 });
             const face = new THREE.Mesh(faceG, faceMat);
-            face.position.set(0, 2.6, 0.41);
+            face.position.set(0, 2.25, 0.31);
             clockGroup.add(face);
 
             scene.add(clockGroup);
             finalSceneObjects.push(clockGroup);
 
-            // Ambient spot lighting directly over chair
-            const topLight = new THREE.SpotLight(0xfffaed, 1.5, 15, Math.PI / 4, 0.5);
-            topLight.position.set(0, 8, -6);
+            const topLight = new THREE.SpotLight(0xfffaed, 1.5, 12, Math.PI / 4, 0.5);
+            topLight.position.set(0, 6, -6);
             topLight.target = chairGroup;
             scene.add(topLight);
             finalSceneObjects.push(topLight);
         }
 
-        // --- INTERACTION LOGIC (FOCAL POINTS) ---
+        // --- CORE INTERACTION DETECTOR ---
         function triggerInteraction() {
             if (currentStage === 6) {
-                // Terminal trigger: checking distance to sit in chair
                 const chairPos = new THREE.Vector3(0, 0, -6);
-                if (playerGroup.position.distanceTo(chairPos) < 2.5) {
+                if (playerGroup.position.distanceTo(chairPos) < 2.0) {
                     executeTerminalTransition();
                 }
                 return;
             }
 
-            // Raycaster matching standard reticle center
             const raycaster = new THREE.Raycaster();
             raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
             
-            // Check collisions with active floating artifacts
             const intersects = raycaster.intersectObjects(focalPoints);
             if (intersects.length > 0) {
                 const item = intersects[0].object;
@@ -1048,47 +1025,52 @@
             }
         }
 
+        // Interactive touch triggers for mobile screens
+        window.addEventListener('touchstart', (e) => {
+            if (!isMobile || !isGameRunning) return;
+            // Prevent triggering during movement/look actions
+            const touch = e.touches[0];
+            if (touch.clientX < 180 && touch.clientY > window.innerHeight - 180) return;
+            if (touch.clientX > window.innerWidth / 2) return;
+
+            triggerInteraction();
+        });
+
         function displayMemory(id, obj) {
-            // Flash screen gold representing mental recall
             const flash = document.getElementById('flash-overlay');
             flash.style.opacity = 1;
-            setTimeout(() => { flash.style.opacity = 0; }, 120);
+            setTimeout(() => { flash.style.opacity = 0; }, 150);
 
-            // Remove object from scene and arrays to avoid repeat interactions
             focalPoints = focalPoints.filter(fp => fp !== obj);
             obj.parent.remove(obj);
 
-            // Display written memories
             const subs = document.getElementById('subtitles');
             subs.innerText = `"${MEMORIES[id]}"`;
             subs.style.opacity = 1;
             
-            // Soft temporal duck of sound to clarify message
-            if (outputGain) {
+            if (outputGain && audioCtx) {
                 outputGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
                 outputGain.gain.linearRampToValueAtTime(1.0, audioCtx.currentTime + 3.0);
             }
 
-            setTimeout(() => {
-                subs.style.opacity = 0;
-            }, 3500);
+            setTimeout(() => { subs.style.opacity = 0; }, 3000);
         }
 
-        // Ending sequence - sitting down
         function executeTerminalTransition() {
-            // Anchor player camera inside chair position
-            playerGroup.position.set(0, 1.25, -5.6);
-            camera.quaternion.setFromEuler(new THREE.Euler(0, Math.PI, 0)); // look forward
+            playerGroup.position.set(0, 1.2, -5.6);
+            camera.quaternion.setFromEuler(new THREE.Euler(0, Math.PI, 0)); 
             
-            // Lock inputs
             moveForward = moveBackward = moveLeft = moveRight = false;
-            document.exitPointerLock();
+            if (isMobile) {
+                document.getElementById('mobile-joystick').style.display = 'none';
+            } else {
+                document.exitPointerLock();
+            }
 
             const subs = document.getElementById('subtitles');
             subs.innerText = "... Friends past reunited ...";
             subs.style.opacity = 1;
 
-            // Deep fade out transition over 15 seconds matching final clock fade
             setTimeout(() => {
                 subs.style.opacity = 0;
                 let fadeVol = 1.0;
@@ -1096,77 +1078,67 @@
                     fadeVol -= 0.05;
                     if (fadeVol <= 0) {
                         clearInterval(audioInterval);
-                        if (activeAudioElement) activeAudioElement.pause();
-                    } else if (outputGain) {
+                        if (audioStream) audioStream.pause();
+                    } else if (outputGain && audioCtx) {
                         outputGain.gain.setValueAtTime(fadeVol, audioCtx.currentTime);
+                    } else if (audioStream) {
+                        audioStream.volume = fadeVol;
                     }
-                }, 400);
+                }, 300);
 
-                // Black out screen
                 const overlay = document.getElementById('ui-container');
                 overlay.style.display = 'flex';
                 overlay.style.backgroundColor = '#000';
                 overlay.style.opacity = 1;
-                document.getElementById('start-screen').innerHTML = "<h1 style='color: #444; font-size: 1.5rem; letter-spacing: 1px;'>The world has faded.</h1>";
-            }, 10000);
+                document.getElementById('start-screen').innerHTML = "<h1 style='color: #444; font-size: 1.2rem;'>The world has faded.</h1>";
+            }, 8000);
         }
 
-        // --- DEVELOPMENT SKIP OVERRIDES ---
+        // --- DEBUG COMPONENT OVERRIDES ---
         function skipToStage(stageNum) {
             if (!isGameRunning) return;
             currentStage = stageNum;
             gameTime = (stageNum - 1) * STAGE_DURATION;
             
-            // Clean dynamic entities
             clearAllChunks();
-            
-            // Refresh stage properties
             document.getElementById('stage-title').innerText = STAGE_NAMES[stageNum];
             
             if (stageNum === 6) {
                 initStage6Environment();
             } else {
-                // Tear down stage 6 objects
                 finalSceneObjects.forEach(obj => scene.remove(obj));
                 finalSceneObjects = [];
-                scene.fog.color.setHex(0x0a0a0a);
-                scene.fog.density = 0.05;
-                playerGridPos = { x: 999, z: 999 }; // force generation trigger
+                scene.fog.color.setHex(0x050505);
+                scene.fog.density = 0.04;
+                playerGridPos = { x: 999, z: 999 }; 
             }
 
             playStageAudio(stageNum);
         }
 
-        // --- MAIN UPDATE GAME LOOP ---
+        // --- MASTER SYSTEM EVENT TICK LOOP ---
         function animate() {
             requestAnimationFrame(animate);
 
             if (!isGameRunning) return;
 
-            const delta = clock.getDelta();
-            
-            // Keep track of master timeline
+            const delta = Math.min(0.1, clock.getDelta()); // Cap delta to prevent clipping during frame freezes
             gameTime += delta;
             
-            // Handle automatic stage changes
             const calculatedStage = Math.min(TOTAL_STAGES, Math.floor(gameTime / STAGE_DURATION) + 1);
             if (calculatedStage !== currentStage) {
                 skipToStage(calculatedStage);
             }
 
-            // Update on-screen HUD
             const min = Math.floor(gameTime / 60);
             const sec = Math.floor(gameTime % 60);
             document.getElementById('time-display').innerText = `Time: ${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
 
-            // Render updates based on active gravity systems
-            currentUp.lerp(targetUp, delta * 3.0); // Smooth gravity align interpolations
+            currentUp.lerp(targetUp, delta * 3.0);
 
-            // Apply camera/movement matrices relative to player configuration
             let forwardVec = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
             let rightVec = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
 
-            // Flatten projection direction vector on current gravity horizon to keep locomotion fluid
             forwardVec.projectOnPlane(currentUp).normalize();
             rightVec.projectOnPlane(currentUp).normalize();
 
@@ -1177,43 +1149,34 @@
             if (moveRight) direction.add(rightVec);
             direction.normalize();
 
-            // Simple first person sliding physics logic
-            const currentSpeed = currentStage === 5 ? 1.5 + Math.sin(gameTime)*0.8 : 3.0; // Stage 5 movement drift
-            velocity.addScaledVector(direction, currentSpeed * 25.0 * delta);
-            velocity.addScaledVector(velocity, -8.0 * delta); // linear damping friction
+            const speedMultiplier = currentStage === 5 ? 1.5 + Math.sin(gameTime)*0.8 : 3.0; 
+            velocity.addScaledVector(direction, speedMultiplier * 20.0 * delta);
+            velocity.addScaledVector(velocity, -8.0 * delta); 
 
-            // Update position
             playerGroup.position.addScaledVector(velocity, delta);
 
-            // Height alignment relative to local floor grid system (Stage 6 maintains flat floor, 4/5 maintains float)
             if (currentStage < 4) {
-                playerGroup.position.y = 1.8; // Hard clamp horizontal floor level
+                playerGroup.position.y = 1.8; 
             } else if (currentStage === 5) {
-                // Subtle breathing wave simulation representing losing spatial balance
-                playerGroup.position.y += Math.sin(gameTime * 0.5) * 0.005;
+                playerGroup.position.y += Math.sin(gameTime * 0.4) * 0.003;
             }
 
-            // Core non-Euclidean generation sweep
             updateChunks();
 
-            // Handle Stage-specific animations
+            // Run active animations
             chunks.forEach((chunk) => {
                 chunk.children.forEach((child) => {
-                    // Update Stage 3 kinetic sliding walls
                     if (child.userData && child.userData.type === "sliding") {
                         child.position.x = child.userData.baseX + Math.sin(gameTime * child.userData.speed) * child.userData.range;
                     }
-                    // Handle glowing focal rotations
                     if (child.userData && child.userData.type === "artifact") {
                         child.rotation.y += delta * 1.5;
                         child.rotation.x += delta * 0.5;
                     }
-                    // Gravity Pad Trigger checking
                     if (child.userData && child.userData.type === "gravityPad") {
                         const worldPos = new THREE.Vector3();
                         child.getWorldPosition(worldPos);
-                        if (playerGroup.position.distanceTo(worldPos) < 1.2) {
-                            // Rotate target orientation axes to simulate gravity flip
+                        if (playerGroup.position.distanceTo(worldPos) < 1.0) {
                             const localDir = child.userData.dir;
                             targetGravity.copy(localDir).multiplyScalar(-1);
                             targetUp.copy(localDir);
@@ -1222,13 +1185,10 @@
                 });
             });
 
-            // Smoothly interpolate player up vector to handle gravity tilts
             playerGroup.up.copy(currentUp);
-
             renderer.render(scene, camera);
         }
 
-        // Init Setup Run
         initScene();
         animate();
     </script>
