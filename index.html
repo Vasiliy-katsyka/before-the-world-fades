@@ -260,14 +260,14 @@
         let isGameRunning = false;
         let isMobile = false;
 
-        // Space characters strictly URL-encoded to %20 to avoid loading breaks
+        // Using direct GitHub LFS Media CDN URLs to bypass local text-pointer limits
         const AUDIO_FILES = {
-            1: "audio/Its%20just%20a%20burning%20memory.m4a",
-            2: "audio/A%20losing%20battle%20is%20raging.m4a",
-            3: "audio/Back%20there%20Benjamin.m4a",
-            4: "audio/Stage%204%20Post%20Awareness%20Confusions.m4a",
-            5: "audio/Stage%205%20Advanced%20plaque%20entanglements.m4a",
-            6: "audio/Stage%206%20Place%20in%20the%20World%20fades%20away.m4a"
+            1: "https://media.githubusercontent.com/media/Vasiliy-katsyka/before-the-world-fades/main/audio/Its just a burning memory.m4a",
+            2: "https://media.githubusercontent.com/media/Vasiliy-katsyka/before-the-world-fades/main/audio/A losing battle is raging.m4a",
+            3: "https://media.githubusercontent.com/media/Vasiliy-katsyka/before-the-world-fades/main/audio/Back there Benjamin.m4a",
+            4: "https://media.githubusercontent.com/media/Vasiliy-katsyka/before-the-world-fades/main/audio/Stage 4 Post Awareness Confusions.m4a",
+            5: "https://media.githubusercontent.com/media/Vasiliy-katsyka/before-the-world-fades/main/audio/Stage 5 Advanced plaque entanglements.m4a",
+            6: "https://media.githubusercontent.com/media/Vasiliy-katsyka/before-the-world-fades/main/audio/Stage 6 Place in the World fades away.m4a"
         };
 
         const STAGE_NAMES = {
@@ -309,7 +309,6 @@
         let materials = {};
         let textures = {};
 
-        // Simplified native audio loop (bypasses browser CORS rules perfectly)
         let audioStream;
 
         let playerGroup; 
@@ -321,8 +320,6 @@
         }
 
         function initAudio() {
-            // No AudioContext or WebAudioAPI is used.
-            // Playing directly through HTML5 audio ignores CORS restrictions
             audioStream = new Audio();
         }
 
@@ -330,38 +327,37 @@
             if (!audioStream) return;
 
             audioStream.pause();
-            audioStream.src = AUDIO_FILES[stageNum];
+            
+            // Auto-encode spaces to %20 to avoid loading breaks
+            audioStream.src = encodeURI(AUDIO_FILES[stageNum]);
             audioStream.loop = stageNum !== 6;
 
-            // Handle uncut timestamps
             if (stageNum === 6) {
                 audioStream.addEventListener('loadedmetadata', function onMetadata() {
-                    audioStream.currentTime = 780; // Seek to 13:00 to catch drone transition [1]
+                    audioStream.currentTime = 780; // Seek to 13:00 to catch choir [1]
                     audioStream.removeEventListener('loadedmetadata', onMetadata);
                 });
             } else {
                 audioStream.currentTime = 0;
             }
 
-            // Adjust volume to represent mental decay
             applyAudioDecay(stageNum);
 
             audioStream.play().catch(e => {
-                console.warn("Audio loading issue. Make sure your files are located in the 'audio/' directory.", e);
+                console.warn("Failed to stream raw file from CDN:", e);
             });
         }
 
         function applyAudioDecay(stageNum) {
             if (!audioStream) return;
 
-            // Fade the volume down as stages progress to simulate losing focus
             switch(stageNum) {
                 case 1: audioStream.volume = 1.0; break;
                 case 2: audioStream.volume = 0.85; break;
                 case 3: audioStream.volume = 0.70; break;
                 case 4: audioStream.volume = 0.55; break;
                 case 5: audioStream.volume = 0.40; break;
-                case 6: audioStream.volume = 0.90; break; // Rise in volume during final choir [1]
+                case 6: audioStream.volume = 0.90; break; 
             }
         }
 
@@ -371,7 +367,6 @@
             canvas.height = 128;
             const ctx = canvas.getContext('2d');
 
-            // 1. Carpet
             ctx.fillStyle = '#dbcca9';
             ctx.fillRect(0,0,128,128);
             for(let i=0; i<5000; i++) {
@@ -382,7 +377,6 @@
             textures.carpet.wrapS = THREE.RepeatWrapping;
             textures.carpet.wrapT = THREE.RepeatWrapping;
 
-            // 2. Wallpaper
             const canvasWP = document.createElement('canvas');
             canvasWP.width = 128;
             canvasWP.height = 128;
@@ -397,7 +391,6 @@
             textures.wallpaper.wrapS = THREE.RepeatWrapping;
             textures.wallpaper.wrapT = THREE.RepeatWrapping;
 
-            // 3. Concrete
             const canvasC = document.createElement('canvas');
             canvasC.width = 128;
             canvasC.height = 128;
@@ -669,7 +662,6 @@
                 floorMat = materials.concrete;
             }
 
-            // Standard Floor
             if (currentStage < 4) {
                 const floorGeom = new THREE.PlaneGeometry(chunkSize, chunkSize);
                 const floor = new THREE.Mesh(floorGeom, floorMat);
@@ -689,7 +681,6 @@
                 }
             }
 
-            // Ceiling
             if (currentStage < 4) {
                 const ceilingGeom = new THREE.PlaneGeometry(chunkSize, chunkSize);
                 const ceiling = new THREE.Mesh(ceilingGeom, floorMat); 
@@ -698,7 +689,6 @@
                 group.add(ceiling);
             }
 
-            // Walls (Left & Right)
             if (currentStage < 4) {
                 const wallGeom = new THREE.PlaneGeometry(chunkSize, 3.5);
                 
